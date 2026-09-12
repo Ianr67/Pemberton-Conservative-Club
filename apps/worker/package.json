@@ -9,6 +9,10 @@
     "test": "vitest run --pool=threads --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@pcc/contracts": "workspace:*",
+    "@pcc/validation": "workspace:*"
+  },
   "devDependencies": {
     "tsx": "^4.21.0"
   }
