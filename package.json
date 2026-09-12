@@ -9,11 +9,15 @@
   "packageManager": "pnpm@9.15.9",
   "scripts": {
     "build": "turbo run build",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs --follow postgres",
+    "db:up": "docker compose up --detach --wait postgres",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "test": "turbo run test",
+    "test:database": "pnpm --filter @pcc/database test:integration",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {

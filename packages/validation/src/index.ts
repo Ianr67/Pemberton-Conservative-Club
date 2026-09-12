@@ -13,3 +13,22 @@ export function parseServiceEnvironment(
     })
     .parse(environment);
 }
+
+function isPostgresUrl(value: string): boolean {
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === 'postgres:' || protocol === 'postgresql:';
+  } catch {
+    return false;
+  }
+}
+
+export function parseDatabaseEnvironment(environment: NodeJS.ProcessEnv) {
+  return z
+    .object({
+      DATABASE_URL: z.string().refine(isPostgresUrl, {
+        message: 'DATABASE_URL must be a valid PostgreSQL connection URL',
+      }),
+    })
+    .parse(environment);
+}

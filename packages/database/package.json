@@ -7,7 +7,14 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run --pool=threads --passWithNoTests",
+    "test": "vitest run --pool=threads --exclude dist/** --passWithNoTests",
+    "test:integration": "vitest run --pool=threads --exclude dist/** src/database.integration.test.ts",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.0.0"
   }
 }

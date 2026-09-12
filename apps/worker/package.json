@@ -6,7 +6,7 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
-    "test": "vitest run --pool=threads --passWithNoTests",
+    "test": "vitest run --pool=threads --exclude dist/** --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
