@@ -1,0 +1,31 @@
+{
+  "name": "pemberton-conservative-club",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Demonstration platform for Pemberton Conservative Club.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.10.0",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.2",
+    "turbo": "^2.8.17",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^5.0.0"
+  }
+}

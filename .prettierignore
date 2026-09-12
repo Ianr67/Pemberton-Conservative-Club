@@ -1,0 +1,7 @@
+.next
+.turbo
+.vscode
+coverage
+dist
+node_modules
+pnpm-lock.yaml

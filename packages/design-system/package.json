@@ -1,0 +1,13 @@
+{
+  "name": "@pcc/design-system",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run --pool=threads --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  }
+}
