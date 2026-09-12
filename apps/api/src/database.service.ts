@@ -1,5 +1,6 @@
 import { Injectable, type OnModuleDestroy } from '@nestjs/common';
 import { PostgresDatabaseClient } from '@pcc/database';
+import type { QueryResult, QueryResultRow } from 'pg';
 import { parseDatabaseEnvironment } from '@pcc/validation';
 
 @Injectable()
@@ -16,6 +17,13 @@ export class DatabaseService implements OnModuleDestroy {
 
   checkConnection(): Promise<void> {
     return this.#client.checkConnection();
+  }
+
+  query<Row extends QueryResultRow>(
+    text: string,
+    values: readonly unknown[] = [],
+  ): Promise<QueryResult<Row>> {
+    return this.#client.query<Row>(text, values);
   }
 
   onModuleDestroy(): Promise<void> {

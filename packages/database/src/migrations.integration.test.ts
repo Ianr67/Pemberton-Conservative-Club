@@ -30,10 +30,14 @@ describeWithDatabase('database migrations', () => {
 
     try {
       await client.query(`SET search_path TO ${schema}`);
-      expect(await migrate(client)).toEqual(['000001_identity_foundation.sql']);
+      expect(await migrate(client)).toEqual([
+        '000001_identity_foundation.sql',
+        '000002_administrator_credentials.sql',
+      ]);
       expect(await migrate(client)).toEqual([]);
       expect(await getMigrationStatus(client)).toEqual([
         { name: '000001_identity_foundation.sql', state: 'applied' },
+        { name: '000002_administrator_credentials.sql', state: 'applied' },
       ]);
       const tables = await client.query<{ table_name: string }>(
         `SELECT table_name

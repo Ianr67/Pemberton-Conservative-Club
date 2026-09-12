@@ -1,5 +1,7 @@
 import type { PoolClient } from 'pg';
 
+import { hashPassword } from './index.js';
+
 const ids = {
   adminPermission: '30000000-0000-4000-8000-000000000001',
   auditPermission: '30000000-0000-4000-8000-000000000002',
@@ -21,15 +23,29 @@ export async function seedDevelopmentData(
 
   await client.query('BEGIN');
   try {
+    const administratorPasswordHash = await hashPassword(
+      'PembertonDemo!2026',
+      Buffer.from('pcc-admin-demo-salt'),
+    );
+    const editorPasswordHash = await hashPassword(
+      'NotForLoginDemo!2026',
+      Buffer.from('pcc-editor-demo-salt'),
+    );
     await client.query(
-      `INSERT INTO users (id, email, display_name)
+      `INSERT INTO users (id, email, display_name, password_hash)
        VALUES
-         ($1, 'admin@pemberton-club.example.test', 'Alex Demo'),
-         ($2, 'editor@pemberton-club.example.test', 'Morgan Demo')
+         ($1, 'admin@pemberton-club.example.test', 'Alex Demo', $3),
+         ($2, 'editor@pemberton-club.example.test', 'Morgan Demo', $4)
        ON CONFLICT (id) DO UPDATE SET
          email = EXCLUDED.email,
-         display_name = EXCLUDED.display_name`,
-      [ids.administratorUser, ids.editorUser],
+         display_name = EXCLUDED.display_name,
+         password_hash = EXCLUDED.password_hash`,
+      [
+        ids.administratorUser,
+        ids.editorUser,
+        administratorPasswordHash,
+        editorPasswordHash,
+      ],
     );
     await client.query(
       `INSERT INTO roles (id, code, name)

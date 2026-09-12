@@ -125,3 +125,12 @@ Use `pnpm db:logs` to inspect PostgreSQL and `pnpm db:down` to stop it. The name
 `GET /api/v1/health` is a liveness endpoint and remains healthy when PostgreSQL is unavailable. `GET /api/v1/health/database` checks PostgreSQL directly and returns HTTP 503 with a safe response when it cannot connect.
 
 No business-domain schema is included yet; this migration is limited to the identity, authorization, session, and audit foundations.
+
+## Demonstration administrator
+
+After migrating and seeding with `NODE_ENV=development`, start the API and administration portal, then open `http://localhost:3001`.
+
+- Email: `admin@pemberton-club.example.test`
+- Password: `PembertonDemo!2026`
+
+This account and password are fictional and development-only. Passwords are stored as salted scrypt hashes. Successful login creates an eight-hour session whose random token is kept in an `HttpOnly`, `SameSite=Lax` browser cookie (`Secure` in production); only its SHA-256 hash is stored in PostgreSQL. The API independently checks the active session, administrator role, and `administration.access` permission for the dashboard. Signing out revokes the database session and clears the cookie. Login attempts are limited to five failures per IP/email pair in fifteen minutes, and login successes, failures, and logout are appended to `audit_events`.
