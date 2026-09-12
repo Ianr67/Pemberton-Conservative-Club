@@ -93,8 +93,35 @@ The development database runs as PostgreSQL 17 in Docker Compose. It is publishe
    pnpm test:database
    ```
 
+## Database migrations and development fixtures
+
+The repository uses a small, forward-only SQL migration runner in `@pcc/database`. Migration files live in `packages/database/migrations`, execute transactionally in filename order, and are recorded with a SHA-256 checksum in `_pcc_migrations`. Never edit an applied migration; add the next numbered SQL file instead.
+
+Load the root `.env` values into the current PowerShell session as shown above, then use:
+
+```powershell
+pnpm db:status
+pnpm db:migrate
+pnpm db:seed
+pnpm test:migrations
+```
+
+- `db:status` reports each migration as `pending` or `applied` and fails if an applied file has changed.
+- `db:migrate` safely reapplies the migration set and does nothing when the database is current.
+- `db:seed` first migrates, then idempotently inserts deterministic fictional users, roles, permissions, assignments, and an audit event. Seed addresses use only `example.test`. Set `NODE_ENV=development` before running it; the command fails closed in every other environment.
+- `test:migrations` creates an isolated temporary schema, migrates it from empty, applies the seed twice, exercises the reset guard, and removes the temporary schema.
+
+To restore only the known development-owned identity and audit records, explicitly set the environment and run:
+
+```powershell
+$env:NODE_ENV = 'development'
+pnpm db:reset
+```
+
+The reset truncates only `users`, `roles`, `permissions`, their assignments, `sessions`, and `audit_events`, then reapplies the deterministic fixtures. It refuses to connect or change data unless `NODE_ENV` is exactly `development`; `production`, `test`, and missing values all fail closed. It does not drop the database, migrations, other schemas, or the Docker volume.
+
 Use `pnpm db:logs` to inspect PostgreSQL and `pnpm db:down` to stop it. The named development volume is retained by `db:down`; no command in this step deletes database data.
 
 `GET /api/v1/health` is a liveness endpoint and remains healthy when PostgreSQL is unavailable. `GET /api/v1/health/database` checks PostgreSQL directly and returns HTTP 503 with a safe response when it cannot connect.
 
-No business schema or migrations are included in this step.
+No business-domain schema is included yet; this migration is limited to the identity, authorization, session, and audit foundations.

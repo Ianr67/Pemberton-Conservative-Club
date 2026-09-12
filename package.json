@@ -11,6 +11,10 @@
     "build": "turbo run build",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs --follow postgres",
+    "db:migrate": "pnpm --filter @pcc/database migrate",
+    "db:reset": "pnpm --filter @pcc/database reset",
+    "db:seed": "pnpm --filter @pcc/database seed",
+    "db:status": "pnpm --filter @pcc/database status",
     "db:up": "docker compose up --detach --wait postgres",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write .",
@@ -18,6 +22,7 @@
     "lint": "eslint . --max-warnings=0",
     "test": "turbo run test",
     "test:database": "pnpm --filter @pcc/database test:integration",
+    "test:migrations": "pnpm --filter @pcc/database test:migrations",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {

@@ -7,14 +7,20 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "migrate": "tsx src/cli.ts migrate",
+    "reset": "tsx src/cli.ts reset",
+    "seed": "tsx src/cli.ts seed",
+    "status": "tsx src/cli.ts status",
     "test": "vitest run --pool=threads --exclude dist/** --passWithNoTests",
     "test:integration": "vitest run --pool=threads --exclude dist/** src/database.integration.test.ts",
+    "test:migrations": "vitest run --pool=threads --exclude dist/** src/migrations.integration.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "pg": "^8.0.0"
   },
   "devDependencies": {
-    "@types/pg": "^8.0.0"
+    "@types/pg": "^8.0.0",
+    "tsx": "^4.21.0"
   }
 }
