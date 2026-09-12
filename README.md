@@ -134,3 +134,7 @@ After migrating and seeding with `NODE_ENV=development`, start the API and admin
 - Password: `PembertonDemo!2026`
 
 This account and password are fictional and development-only. Passwords are stored as salted scrypt hashes. Successful login creates an eight-hour session whose random token is kept in an `HttpOnly`, `SameSite=Lax` browser cookie (`Secure` in production); only its SHA-256 hash is stored in PostgreSQL. The API independently checks the active session, administrator role, and `administration.access` permission for the dashboard. Signing out revokes the database session and clears the cookie. Login attempts are limited to five failures per IP/email pair in fifteen minutes, and login successes, failures, and logout are appended to `audit_events`.
+
+## Homepage introduction content slice
+
+Sign in to the administration portal, choose **Manage pages**, and open **Homepage introduction**. Saving creates a new draft version without changing the public endpoint or website. **Preview draft** is authenticated and shows the latest draft. Publishing the selected draft atomically updates the public version and appends `content.homepage_published` to the audit trail. The public website reads only `GET /api/v1/content/homepage-introduction`; no draft content is exposed there.

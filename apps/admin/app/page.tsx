@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { LogoutButton } from './logout-button';
+import Link from 'next/link';
 
 interface User {
   displayName: string;
@@ -26,6 +27,7 @@ export default async function DashboardPage() {
           Signed in as {user.displayName} ({user.email}).
         </p>
         <LogoutButton />
+        <Link href="/pages">Manage pages</Link>
       </section>
     </main>
   );

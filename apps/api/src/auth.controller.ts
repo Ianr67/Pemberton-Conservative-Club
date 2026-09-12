@@ -14,7 +14,9 @@ import { AuthService } from './auth.service.js';
 
 const cookieName = 'pcc_admin_session';
 
-function readSession(cookieHeader: string | undefined): string | undefined {
+export function readSession(
+  cookieHeader: string | undefined,
+): string | undefined {
   return cookieHeader
     ?.split(';')
     .map((item) => item.trim())

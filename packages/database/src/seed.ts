@@ -11,6 +11,8 @@ const ids = {
   administratorUser: '10000000-0000-4000-8000-000000000001',
   editorUser: '10000000-0000-4000-8000-000000000002',
   auditEvent: '40000000-0000-4000-8000-000000000001',
+  homepage: '50000000-0000-4000-8000-000000000001',
+  homepagePublishedVersion: '60000000-0000-4000-8000-000000000001',
 } as const;
 
 export async function seedDevelopmentData(
@@ -93,6 +95,25 @@ export async function seedDevelopmentData(
        ON CONFLICT (id) DO NOTHING`,
       [ids.auditEvent, ids.administratorUser],
     );
+    await client.query(
+      `INSERT INTO pages (id, slug, title) VALUES ($1, 'homepage', 'Homepage introduction')
+       ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title`,
+      [ids.homepage],
+    );
+    await client.query(
+      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, created_by, published_at)
+       VALUES ($1, $2, 1, 'published', $3, $4, now()) ON CONFLICT (id) DO NOTHING`,
+      [
+        ids.homepagePublishedVersion,
+        ids.homepage,
+        'A welcoming local club at the heart of Pemberton, bringing people together for good company, activities and community events.',
+        ids.administratorUser,
+      ],
+    );
+    await client.query(
+      `UPDATE pages SET published_version_id = $1, updated_at = now() WHERE id = $2`,
+      [ids.homepagePublishedVersion, ids.homepage],
+    );
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -114,6 +135,8 @@ export async function resetDevelopmentData(
   try {
     await client.query(
       `TRUNCATE TABLE
+         page_versions,
+         pages,
          audit_events,
          sessions,
          user_roles,
