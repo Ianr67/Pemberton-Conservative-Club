@@ -138,3 +138,7 @@ This account and password are fictional and development-only. Passwords are stor
 ## Homepage introduction content slice
 
 Sign in to the administration portal, choose **Manage pages**, and open **Homepage introduction**. Saving creates a new draft version without changing the public endpoint or website. **Preview draft** is authenticated and shows the latest draft. Publishing the selected draft atomically updates the public version and appends `content.homepage_published` to the audit trail. The public website reads only `GET /api/v1/content/homepage-introduction`; no draft content is exposed there.
+
+## Club settings slice
+
+The dashboard's **Edit club settings** screen manages the club name, structured postal address and contact details, seven structured daily opening-time records, and supported HTTPS social links. Saving records an audited draft; publishing atomically selects and audits that version. The website reads only published settings from the read-only `GET /api/v1/club-settings` endpoint. Seeded contact details and social profiles are fictional demonstration data.

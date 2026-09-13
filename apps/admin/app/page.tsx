@@ -28,6 +28,7 @@ export default async function DashboardPage() {
         </p>
         <LogoutButton />
         <Link href="/pages">Manage pages</Link>
+        <Link href="/club-settings">Edit club settings</Link>
       </section>
     </main>
   );

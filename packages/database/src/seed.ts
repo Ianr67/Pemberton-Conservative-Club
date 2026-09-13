@@ -13,6 +13,8 @@ const ids = {
   auditEvent: '40000000-0000-4000-8000-000000000001',
   homepage: '50000000-0000-4000-8000-000000000001',
   homepagePublishedVersion: '60000000-0000-4000-8000-000000000001',
+  clubSettings: '70000000-0000-4000-8000-000000000001',
+  clubSettingsPublishedVersion: '71000000-0000-4000-8000-000000000001',
 } as const;
 
 export async function seedDevelopmentData(
@@ -114,6 +116,30 @@ export async function seedDevelopmentData(
       `UPDATE pages SET published_version_id = $1, updated_at = now() WHERE id = $2`,
       [ids.homepagePublishedVersion, ids.homepage],
     );
+    await client.query(
+      `INSERT INTO club_settings (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`,
+      [ids.clubSettings],
+    );
+    await client.query(
+      `INSERT INTO club_setting_versions (id,club_settings_id,version_number,state,club_name,address_line_1,address_line_2,town,postcode,telephone,email,created_by,published_at) VALUES ($1,$2,1,'published','Pemberton Conservative Club','Fictional 12 Club Lane',NULL,'Pemberton','WN5 0AA','01942 000 123','hello@pemberton-club.example.test',$3,now()) ON CONFLICT (id) DO NOTHING`,
+      [
+        ids.clubSettingsPublishedVersion,
+        ids.clubSettings,
+        ids.administratorUser,
+      ],
+    );
+    await client.query(
+      `INSERT INTO club_opening_times (version_id,day_of_week,is_closed,opens_at,closes_at) VALUES ($1,1,true,NULL,NULL),($1,2,false,'18:00','23:00'),($1,3,false,'18:00','23:00'),($1,4,false,'18:00','23:00'),($1,5,false,'16:00','23:30'),($1,6,false,'12:00','23:30'),($1,7,false,'12:00','22:30') ON CONFLICT DO NOTHING`,
+      [ids.clubSettingsPublishedVersion],
+    );
+    await client.query(
+      `INSERT INTO club_social_links (version_id,platform,url) VALUES ($1,'facebook','https://www.facebook.com/pembertonclubdemo'),($1,'instagram','https://www.instagram.com/pembertonclubdemo') ON CONFLICT DO NOTHING`,
+      [ids.clubSettingsPublishedVersion],
+    );
+    await client.query(
+      `UPDATE club_settings SET published_version_id=$1,updated_at=now() WHERE id=$2`,
+      [ids.clubSettingsPublishedVersion, ids.clubSettings],
+    );
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -135,6 +161,10 @@ export async function resetDevelopmentData(
   try {
     await client.query(
       `TRUNCATE TABLE
+         club_social_links,
+         club_opening_times,
+         club_setting_versions,
+         club_settings,
          page_versions,
          pages,
          audit_events,

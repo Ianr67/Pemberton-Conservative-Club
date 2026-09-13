@@ -34,12 +34,14 @@ describeWithDatabase('database migrations', () => {
         '000001_identity_foundation.sql',
         '000002_administrator_credentials.sql',
         '000003_homepage_content.sql',
+        '000004_club_settings.sql',
       ]);
       expect(await migrate(client)).toEqual([]);
       expect(await getMigrationStatus(client)).toEqual([
         { name: '000001_identity_foundation.sql', state: 'applied' },
         { name: '000002_administrator_credentials.sql', state: 'applied' },
         { name: '000003_homepage_content.sql', state: 'applied' },
+        { name: '000004_club_settings.sql', state: 'applied' },
       ]);
       const tables = await client.query<{ table_name: string }>(
         `SELECT table_name
@@ -51,6 +53,10 @@ describeWithDatabase('database migrations', () => {
       expect(tables.rows.map(({ table_name }) => table_name)).toEqual([
         '_pcc_migrations',
         'audit_events',
+        'club_opening_times',
+        'club_setting_versions',
+        'club_settings',
+        'club_social_links',
         'page_versions',
         'pages',
         'permissions',
