@@ -69,3 +69,39 @@ describe('homepage content states', () => {
     expect(sql).toContain('content.homepage_published');
   });
 });
+
+describe('editable website page states', () => {
+  it('publishes the selected page draft and audits the page slug', async () => {
+    const query = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          id: 'draft-id',
+          slug: 'about',
+          title: 'About the club',
+          introduction: 'New about copy',
+          eyebrow: 'Our story',
+          heading: 'About us',
+          body: 'New about copy',
+          state: 'published',
+          version_number: 2,
+        },
+      ],
+    });
+    await expect(
+      new ContentService({ query } as never).publishPage(
+        'about',
+        'draft-id',
+        administrator,
+      ),
+    ).resolves.toMatchObject({
+      slug: 'about',
+      state: 'published',
+      versionNumber: 2,
+    });
+    const sql = String(query.mock.calls[0]?.[0]);
+    expect(sql).toContain('content.page_published');
+    expect(query.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining(['draft-id', 'about']),
+    );
+  });
+});

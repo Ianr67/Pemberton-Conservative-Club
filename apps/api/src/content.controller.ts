@@ -4,11 +4,16 @@ import {
   Controller,
   Get,
   Headers,
+  Param,
   Post,
 } from '@nestjs/common';
 import { readSession } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { ContentService } from './content.service.js';
+import {
+  validatePageContentInput,
+  type PageContentInput,
+} from '@pcc/contracts';
 
 @Controller('api/v1')
 export class ContentController {
@@ -19,6 +24,9 @@ export class ContentController {
   @Get('content/homepage-introduction') published() {
     return this.content.publishedHomepage();
   }
+  @Get('content/pages/:slug') publishedPage(@Param('slug') slug: string) {
+    return this.content.publishedPage(slug);
+  }
   @Get('admin/pages') async pages(@Headers('cookie') cookie?: string) {
     await this.auth.authenticate(readSession(cookie));
     return this.content.listPages();
@@ -28,6 +36,52 @@ export class ContentController {
   ) {
     await this.auth.authenticate(readSession(cookie));
     return this.content.editorState();
+  }
+  @Get('admin/pages/:slug') async pageEditor(
+    @Headers('cookie') cookie: string | undefined,
+    @Param('slug') slug: string,
+  ) {
+    await this.auth.authenticate(readSession(cookie));
+    return this.content.pageEditorState(slug);
+  }
+  @Post('admin/pages/:slug/drafts') async savePage(
+    @Headers('cookie') cookie: string | undefined,
+    @Param('slug') slug: string,
+    @Body() body: unknown,
+  ) {
+    const administrator = await this.auth.authenticate(readSession(cookie));
+    const errors = validatePageContentInput(body);
+    if (errors.length)
+      throw new BadRequestException({
+        code: 'invalid_page_content',
+        message: errors.join(' '),
+      });
+    return {
+      draft: await this.content.savePageDraft(
+        slug,
+        body as PageContentInput,
+        administrator,
+      ),
+    };
+  }
+  @Post('admin/pages/:slug/publish') async publishPage(
+    @Headers('cookie') cookie: string | undefined,
+    @Param('slug') slug: string,
+    @Body() body: unknown,
+  ) {
+    const administrator = await this.auth.authenticate(readSession(cookie));
+    const versionId =
+      typeof body === 'object' && body
+        ? (body as Record<string, unknown>).versionId
+        : undefined;
+    if (typeof versionId !== 'string')
+      throw new BadRequestException({
+        code: 'invalid_version',
+        message: 'A draft version is required.',
+      });
+    return {
+      published: await this.content.publishPage(slug, versionId, administrator),
+    };
   }
   @Get('admin/pages/homepage-introduction/preview') async preview(
     @Headers('cookie') cookie?: string,

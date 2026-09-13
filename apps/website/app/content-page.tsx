@@ -5,7 +5,9 @@ import {
   Placeholder,
   SiteShell,
   readSharedContent,
+  readApi,
 } from './site';
+import type { PageContent as PageContentRecord } from '@pcc/contracts';
 
 const copy = {
   '/function-room': {
@@ -46,14 +48,27 @@ const copy = {
 } as const;
 
 export async function ContentPage({ path }: { path: keyof typeof copy }) {
-  const { content, settings } = await readSharedContent();
+  const [{ content, settings }, pageContent] = await Promise.all([
+    readSharedContent(),
+    readApi<PageContentRecord>(`/content/pages/${path.slice(1)}`),
+  ]);
   const page = copy[path];
+  const displayed = pageContent.status === 'ready' ? pageContent.data : page;
   const clubName =
     settings.status === 'ready' ? settings.data.clubName : undefined;
   return (
     <SiteShell current={path} clubName={clubName}>
-      <PageHero eyebrow={page.eyebrow} title={page.title}>
-        <p className="lead">{page.body}</p>
+      <PageHero
+        eyebrow={displayed.eyebrow}
+        title={'heading' in displayed ? displayed.heading : displayed.title}
+      >
+        <p className="lead">{displayed.body}</p>
+        {pageContent.status === 'error' && (
+          <p className="content-notice" role="alert">
+            Published page content is temporarily unavailable. Showing fallback
+            content.
+          </p>
+        )}
       </PageHero>
       <section
         className="intro-panel"

@@ -19,6 +19,54 @@ const ids = {
   venue: '80000000-0000-4000-8000-000000000001',
 } as const;
 
+const editablePages = [
+  {
+    id: '50000000-0000-4000-8000-000000000002',
+    versionId: '60000000-0000-4000-8000-000000000002',
+    slug: 'about',
+    title: 'About the club',
+    eyebrow: 'At the heart of Pemberton',
+    heading: 'About the club',
+    body: 'A familiar local meeting place with a proud past and a warm, forward-looking welcome. Learn about our place in the community and the people who make the club special.',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000003',
+    versionId: '60000000-0000-4000-8000-000000000003',
+    slug: 'membership',
+    title: 'Membership information',
+    eyebrow: 'Belong locally',
+    heading: 'Membership information',
+    body: 'Membership is about good company, a friendly welcome and supporting a long-standing part of the Pemberton community.',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000004',
+    versionId: '60000000-0000-4000-8000-000000000004',
+    slug: 'quiz-nights',
+    title: 'Quiz nights',
+    eyebrow: 'Questions, teams, good company',
+    heading: 'Quiz nights',
+    body: 'Settle in for a friendly evening of general knowledge, conversation and a little healthy competition.',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000005',
+    versionId: '60000000-0000-4000-8000-000000000005',
+    slug: 'function-room',
+    title: 'Function room',
+    eyebrow: 'Celebrate together',
+    heading: 'A room for your occasion',
+    body: 'Our function room is a welcoming setting for family celebrations, community gatherings and special occasions.',
+  },
+  {
+    id: '50000000-0000-4000-8000-000000000006',
+    versionId: '60000000-0000-4000-8000-000000000006',
+    slug: 'sports-and-activities',
+    title: 'Sports and activities',
+    eyebrow: 'Something for everyone',
+    heading: 'Sports and activities',
+    body: 'The club brings people together through regular activities, social groups and live sport in comfortable surroundings.',
+  },
+] as const;
+
 export async function seedDevelopmentData(
   client: PoolClient,
   nodeEnvironment: string | undefined,
@@ -112,8 +160,8 @@ export async function seedDevelopmentData(
       [ids.homepage],
     );
     await client.query(
-      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, created_by, published_at)
-       VALUES ($1, $2, 1, 'published', $3, $4, now()) ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by, published_at)
+       VALUES ($1, $2, 1, 'published', $3, 'Welcome to Pemberton', 'Homepage introduction', $3, $4, now()) ON CONFLICT (id) DO NOTHING`,
       [
         ids.homepagePublishedVersion,
         ids.homepage,
@@ -125,6 +173,29 @@ export async function seedDevelopmentData(
       `UPDATE pages SET published_version_id = $1, updated_at = now() WHERE id = $2`,
       [ids.homepagePublishedVersion, ids.homepage],
     );
+    for (const page of editablePages) {
+      await client.query(
+        `INSERT INTO pages (id, slug, title) VALUES ($1, $2, $3)
+         ON CONFLICT (id) DO UPDATE SET slug = EXCLUDED.slug, title = EXCLUDED.title`,
+        [page.id, page.slug, page.title],
+      );
+      await client.query(
+        `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by, published_at)
+         VALUES ($1, $2, 1, 'published', $5, $3, $4, $5, $6, now()) ON CONFLICT (id) DO NOTHING`,
+        [
+          page.versionId,
+          page.id,
+          page.eyebrow,
+          page.heading,
+          page.body,
+          ids.administratorUser,
+        ],
+      );
+      await client.query(
+        `UPDATE pages SET published_version_id = $1, updated_at = now() WHERE id = $2`,
+        [page.versionId, page.id],
+      );
+    }
     await client.query(
       `INSERT INTO club_settings (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`,
       [ids.clubSettings],

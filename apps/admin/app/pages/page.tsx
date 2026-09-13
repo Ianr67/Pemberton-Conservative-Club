@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 export default async function PageList() {
@@ -14,11 +14,24 @@ export default async function PageList() {
   return (
     <main>
       <p className="eyebrow">Content</p>
-      <h1>Pages</h1>
-      <ul>
+      <h1>Website pages</h1>
+      <p>
+        Edit a draft safely, then publish it to the shared API and public
+        website.
+      </p>
+      <ul className="event-list">
         {pages.map((page) => (
           <li key={page.slug}>
-            <Link href="/pages/homepage-introduction">{page.title}</Link> —
+            <Link
+              href={
+                page.slug === 'homepage'
+                  ? '/pages/homepage-introduction'
+                  : `/pages/${page.slug}`
+              }
+            >
+              {page.title}
+            </Link>
+            {' — '}
             published version {page.publishedVersion ?? 'none'}
           </li>
         ))}

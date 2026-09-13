@@ -1,5 +1,47 @@
 export const apiVersion = 'v1' as const;
 
+export interface PageContent {
+  id: string;
+  slug: string;
+  title: string;
+  eyebrow: string;
+  heading: string;
+  body: string;
+  state: 'draft' | 'published';
+  versionNumber: number;
+}
+
+export interface PageContentInput {
+  eyebrow: string;
+  heading: string;
+  body: string;
+}
+
+export function validatePageContentInput(value: unknown): string[] {
+  if (!value || typeof value !== 'object') return ['Page content is required.'];
+  const page = value as Record<string, unknown>;
+  const errors: string[] = [];
+  if (
+    typeof page.eyebrow !== 'string' ||
+    !page.eyebrow.trim() ||
+    page.eyebrow.length > 120
+  )
+    errors.push('Eyebrow is required and must be at most 120 characters.');
+  if (
+    typeof page.heading !== 'string' ||
+    !page.heading.trim() ||
+    page.heading.length > 180
+  )
+    errors.push('Heading is required and must be at most 180 characters.');
+  if (
+    typeof page.body !== 'string' ||
+    !page.body.trim() ||
+    page.body.length > 5000
+  )
+    errors.push('Body is required and must be at most 5000 characters.');
+  return errors;
+}
+
 export const eventStatuses = ['draft', 'published'] as const;
 export const eventVisibilities = ['public', 'unlisted'] as const;
 export type EventStatus = (typeof eventStatuses)[number];

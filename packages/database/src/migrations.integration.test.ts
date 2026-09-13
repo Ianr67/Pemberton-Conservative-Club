@@ -36,6 +36,7 @@ describeWithDatabase('database migrations', () => {
         '000003_homepage_content.sql',
         '000004_club_settings.sql',
         '000005_events.sql',
+        '000006_editable_content_pages.sql',
       ]);
       expect(await migrate(client)).toEqual([]);
       expect(await getMigrationStatus(client)).toEqual([
@@ -44,6 +45,7 @@ describeWithDatabase('database migrations', () => {
         { name: '000003_homepage_content.sql', state: 'applied' },
         { name: '000004_club_settings.sql', state: 'applied' },
         { name: '000005_events.sql', state: 'applied' },
+        { name: '000006_editable_content_pages.sql', state: 'applied' },
       ]);
       const tables = await client.query<{ table_name: string }>(
         `SELECT table_name
@@ -81,6 +83,10 @@ describeWithDatabase('database migrations', () => {
         'SELECT count(*) FROM events',
       );
       expect(seededEvents.rows[0]?.count).toBe('7');
+      const seededPages = await client.query<{ count: string }>(
+        'SELECT count(*) FROM pages',
+      );
+      expect(seededPages.rows[0]?.count).toBe('6');
 
       await resetDevelopmentData(client, 'development');
       const reset = await client.query<{ count: string }>(

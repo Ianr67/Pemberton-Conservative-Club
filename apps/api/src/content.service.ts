@@ -6,8 +6,16 @@ import { DatabaseService } from './database.service.js';
 interface VersionRow {
   id: string;
   introduction: string;
+  eyebrow: string;
+  heading: string;
+  body: string;
   state: 'draft' | 'published';
   version_number: number;
+}
+
+interface PageVersionRow extends VersionRow {
+  slug: string;
+  title: string;
 }
 
 @Injectable()
@@ -17,6 +25,19 @@ export class ContentService {
     return {
       id: row.id,
       introduction: row.introduction,
+      state: row.state,
+      versionNumber: row.version_number,
+    };
+  }
+
+  private presentPage(row: PageVersionRow) {
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      eyebrow: row.eyebrow,
+      heading: row.heading,
+      body: row.body,
       state: row.state,
       versionNumber: row.version_number,
     };
@@ -40,7 +61,7 @@ export class ContentService {
       title: string;
       published_version: number | null;
     }>(
-      `SELECT p.id, p.slug, p.title, pv.version_number AS published_version FROM pages p LEFT JOIN page_versions pv ON pv.id = p.published_version_id WHERE p.slug = 'homepage'`,
+      `SELECT p.id, p.slug, p.title, pv.version_number AS published_version FROM pages p LEFT JOIN page_versions pv ON pv.id = p.published_version_id ORDER BY CASE WHEN p.slug = 'homepage' THEN 0 ELSE 1 END, p.title`,
     );
     return {
       pages: result.rows.map((r) => ({
@@ -50,6 +71,92 @@ export class ContentService {
         publishedVersion: r.published_version,
       })),
     };
+  }
+
+  async publishedPage(slug: string) {
+    const result = await this.database.query<PageVersionRow>(
+      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number
+       FROM pages p JOIN page_versions pv ON pv.id = p.published_version_id WHERE p.slug = $1`,
+      [slug],
+    );
+    if (!result.rows[0])
+      throw new NotFoundException({
+        code: 'content_not_found',
+        message: 'Page content is unavailable.',
+      });
+    return this.presentPage(result.rows[0]);
+  }
+
+  async latestPageDraft(slug: string) {
+    const result = await this.database.query<PageVersionRow>(
+      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number
+       FROM pages p JOIN page_versions pv ON pv.page_id = p.id
+       WHERE p.slug = $1 AND pv.state = 'draft' ORDER BY pv.version_number DESC LIMIT 1`,
+      [slug],
+    );
+    return result.rows[0] ? this.presentPage(result.rows[0]) : null;
+  }
+
+  async pageEditorState(slug: string) {
+    return {
+      published: await this.publishedPage(slug),
+      draft: await this.latestPageDraft(slug),
+    };
+  }
+
+  async savePageDraft(
+    slug: string,
+    input: { eyebrow: string; heading: string; body: string },
+    administrator: AuthenticatedAdministrator,
+  ) {
+    const result = await this.database.query<PageVersionRow>(
+      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by)
+       SELECT $1, p.id, COALESCE(max(pv.version_number), 0) + 1, 'draft', $4, $2, $3, $4, $5
+       FROM pages p LEFT JOIN page_versions pv ON pv.page_id = p.id WHERE p.slug = $6 GROUP BY p.id, p.slug, p.title
+       RETURNING id, introduction, eyebrow, heading, body, state, version_number,
+         (SELECT slug FROM pages WHERE id = page_id) AS slug,
+         (SELECT title FROM pages WHERE id = page_id) AS title`,
+      [
+        randomUUID(),
+        input.eyebrow.trim(),
+        input.heading.trim(),
+        input.body.trim(),
+        administrator.id,
+        slug,
+      ],
+    );
+    if (!result.rows[0])
+      throw new NotFoundException({
+        code: 'page_not_found',
+        message: 'Page could not be found.',
+      });
+    return this.presentPage(result.rows[0]);
+  }
+
+  async publishPage(
+    slug: string,
+    versionId: string,
+    administrator: AuthenticatedAdministrator,
+  ) {
+    const result = await this.database.query<PageVersionRow>(
+      `WITH selected AS (
+         UPDATE page_versions pv SET state = 'published', published_at = now() FROM pages p
+         WHERE pv.id = $1 AND pv.page_id = p.id AND p.slug = $2 AND pv.state = 'draft'
+         RETURNING pv.id, pv.page_id, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number
+       ), updated_page AS (
+         UPDATE pages p SET published_version_id = selected.id, updated_at = now() FROM selected WHERE p.id = selected.page_id RETURNING p.id, p.slug, p.title
+       ), audited AS (
+         INSERT INTO audit_events (id, actor_user_id, action, entity_type, entity_id, metadata)
+         SELECT $3, $4, 'content.page_published', 'page_version', selected.id, jsonb_build_object('slug', updated_page.slug, 'versionNumber', selected.version_number) FROM selected, updated_page
+       ) SELECT selected.*, updated_page.slug, updated_page.title FROM selected, updated_page`,
+      [versionId, slug, randomUUID(), administrator.id],
+    );
+    if (!result.rows[0])
+      throw new NotFoundException({
+        code: 'draft_not_found',
+        message: 'Draft could not be published.',
+      });
+    return this.presentPage(result.rows[0]);
   }
   async latestDraft() {
     const result = await this.database.query<VersionRow>(

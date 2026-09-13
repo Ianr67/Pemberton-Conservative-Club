@@ -5,12 +5,33 @@ import {
   clubDays,
   validateClubSettings,
   validateEventInput,
+  validatePageContentInput,
 } from './index.js';
 
 describe('API contract foundation', () => {
   it('uses the documented API version', () => {
     expect(apiVersion).toBe('v1');
   });
+});
+
+describe('page content validation', () => {
+  it('accepts complete editable page content', () =>
+    expect(
+      validatePageContentInput({
+        eyebrow: 'Belong locally',
+        heading: 'Membership information',
+        body: 'A welcoming fictional membership introduction.',
+      }),
+    ).toEqual([]));
+
+  it('rejects empty and oversized content', () =>
+    expect(
+      validatePageContentInput({
+        eyebrow: '',
+        heading: '',
+        body: 'x'.repeat(5001),
+      }),
+    ).toHaveLength(3));
 });
 
 describe('club settings validation', () => {
