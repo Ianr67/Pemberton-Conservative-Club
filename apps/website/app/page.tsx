@@ -57,7 +57,7 @@ export default async function HomePage() {
         Demonstration website
       </div>
       <header className="site-header">
-        <a className="brand" href="#home" aria-label={`${clubName}, home`}>
+        <a className="brand" href="/" aria-label={`${clubName}, home`}>
           <span className="brand-mark" aria-hidden="true">
             PC
           </span>
@@ -66,18 +66,27 @@ export default async function HomePage() {
         <nav aria-label="Main navigation">
           <ul>
             <li>
-              <a href="#home" aria-current="page">
+              <a href="/" aria-current="page">
                 Home
               </a>
             </li>
             <li>
-              <a href="#whats-on">What’s on</a>
+              <a href="/quiz-nights">Quiz nights</a>
             </li>
             <li>
-              <a href="#function-room">Function room</a>
+              <a href="/function-room">Function room</a>
             </li>
             <li>
-              <a href="#visit">Visit us</a>
+              <a href="/sports-and-activities">Sports &amp; activities</a>
+            </li>
+            <li>
+              <a href="/membership">Membership</a>
+            </li>
+            <li>
+              <a href="/about">About</a>
+            </li>
+            <li>
+              <a href="/contact">Contact</a>
             </li>
           </ul>
         </nav>

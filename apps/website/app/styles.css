@@ -110,6 +110,71 @@ nav a[aria-current='page'] {
 main {
   overflow: hidden;
 }
+.page-hero,
+.intro-panel,
+.details-grid,
+.placeholder-section,
+.policy-content {
+  width: min(76rem, calc(100% - 2rem));
+  margin-inline: auto;
+}
+.page-hero {
+  padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(2.5rem, 6vw, 4.5rem);
+}
+.page-hero h1 {
+  max-width: 15ch;
+}
+.lead {
+  max-width: 43rem;
+  color: var(--muted);
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  line-height: 1.7;
+}
+.intro-panel {
+  padding: clamp(2.5rem, 6vw, 4.5rem);
+  color: white;
+  background: var(--navy);
+}
+.intro-panel h2,
+.placeholder-section h2,
+.details-grid h2,
+.policy-content h2 {
+  font-size: clamp(1.75rem, 4vw, 2.7rem);
+}
+.intro-panel .lead {
+  color: #e4e8ed;
+}
+.placeholder-section {
+  margin-block: clamp(2.5rem, 6vw, 5rem);
+  padding: clamp(2rem, 6vw, 4rem);
+  border: 1px solid #c9bdab;
+  background: #fffaf2;
+}
+.placeholder-section p:last-child {
+  max-width: 43rem;
+  color: var(--muted);
+}
+.details-grid {
+  display: grid;
+  gap: 2rem;
+  padding-block: clamp(2.5rem, 6vw, 5rem);
+  border-top: 1px solid #c9bdab;
+}
+.details-grid section {
+  min-width: 0;
+}
+.policy-content {
+  max-width: 52rem;
+  padding-bottom: clamp(3rem, 8vw, 6rem);
+}
+.policy-content section {
+  padding: 1.5rem 0;
+  border-top: 1px solid #c9bdab;
+}
+.policy-content p {
+  color: var(--muted);
+  line-height: 1.75;
+}
 .hero,
 .feature-section,
 .room-promotion,
@@ -340,6 +405,15 @@ footer {
 footer p {
   margin: 0;
 }
+footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+footer nav a {
+  min-height: 44px;
+  padding-block: 0.6rem;
+}
 .retry-button {
   min-height: 44px;
   padding: 0.75rem 1.25rem;
@@ -404,6 +478,10 @@ footer p {
   }
   .visit-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .details-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
   }
   .hours-panel,
   .contact-panel {
