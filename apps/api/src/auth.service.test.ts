@@ -44,6 +44,37 @@ describe('administrator authentication', () => {
     ).rejects.toMatchObject({ status: 401 });
   });
 
+  it('enforces the named event-management permission', async () => {
+    const authenticated = {
+      id: 'user-1',
+      email: 'admin@example.test',
+      display_name: 'Admin Demo',
+      password_hash: null,
+    };
+    const deniedQuery = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [authenticated] })
+      .mockResolvedValueOnce({ rows: [] });
+    await expect(
+      new AuthService({ query: deniedQuery } as never).requirePermission(
+        'session-token',
+        'events.manage',
+      ),
+    ).rejects.toMatchObject({ status: 403 });
+    expect(deniedQuery.mock.calls[1]?.[1]).toEqual(['user-1', 'events.manage']);
+
+    const allowedQuery = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [authenticated] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] });
+    await expect(
+      new AuthService({ query: allowedQuery } as never).requirePermission(
+        'session-token',
+        'events.manage',
+      ),
+    ).resolves.toMatchObject({ id: 'user-1' });
+  });
+
   it('rate limits repeated invalid logins', async () => {
     const query = vi.fn().mockResolvedValue({ rows: [] });
     const auth = new AuthService({ query } as never);

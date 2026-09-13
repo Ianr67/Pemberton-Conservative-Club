@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiVersion, clubDays, validateClubSettings } from './index.js';
+import {
+  apiVersion,
+  clubDays,
+  validateClubSettings,
+  validateEventInput,
+} from './index.js';
 
 describe('API contract foundation', () => {
   it('uses the documented API version', () => {
@@ -52,4 +57,46 @@ describe('club settings validation', () => {
       'Open days require valid opening and closing times.',
     );
   });
+});
+
+describe('event validation', () => {
+  const valid = {
+    venueId: '80000000-0000-4000-8000-000000000001',
+    slug: 'quiz-night',
+    title: 'Quiz Night',
+    description: 'A fictional club quiz.',
+    doorsAt: '2027-01-01T18:00:00Z',
+    startsAt: '2027-01-01T19:00:00Z',
+    endsAt: '2027-01-01T21:00:00Z',
+    visibility: 'public',
+    capacity: 100,
+    artwork: {
+      url: 'https://example.test/quiz.jpg',
+      alt: 'Quiz night artwork',
+      width: 1600,
+      height: 900,
+    },
+  };
+  it('accepts complete event details', () =>
+    expect(validateEventInput(valid)).toEqual([]));
+  it('rejects invalid times, slugs and artwork metadata', () =>
+    expect(
+      validateEventInput({
+        ...valid,
+        slug: 'Bad Slug',
+        endsAt: valid.startsAt,
+        artwork: {
+          ...valid.artwork,
+          url: 'http://example.test/quiz.jpg',
+          alt: '',
+        },
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        'Slug must use lowercase letters, numbers and single hyphens.',
+        'Doors must be no later than the start, and the end must be after the start.',
+        'Artwork URL must be a valid HTTPS URL.',
+        'Artwork alternative text is required and must be at most 300 characters.',
+      ]),
+    ));
 });

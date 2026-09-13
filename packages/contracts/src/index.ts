@@ -1,5 +1,120 @@
 export const apiVersion = 'v1' as const;
 
+export const eventStatuses = ['draft', 'published'] as const;
+export const eventVisibilities = ['public', 'unlisted'] as const;
+export type EventStatus = (typeof eventStatuses)[number];
+export type EventVisibility = (typeof eventVisibilities)[number];
+
+export interface EventArtwork {
+  url: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+}
+
+export interface EventInput {
+  venueId: string;
+  slug: string;
+  title: string;
+  description: string;
+  doorsAt: string;
+  startsAt: string;
+  endsAt: string;
+  visibility: EventVisibility;
+  capacity: number;
+  artwork: EventArtwork | null;
+}
+
+export interface EventRecord extends EventInput {
+  id: string;
+  status: EventStatus;
+  venue: { id: string; name: string };
+  publishedAt: string | null;
+  updatedAt: string;
+}
+
+export function validateEventInput(value: unknown): string[] {
+  if (!value || typeof value !== 'object')
+    return ['Event details are required.'];
+  const event = value as Record<string, unknown>;
+  const errors: string[] = [];
+  if (
+    typeof event.venueId !== 'string' ||
+    !/^[0-9a-f-]{36}$/i.test(event.venueId)
+  )
+    errors.push('Choose a valid venue.');
+  if (
+    typeof event.slug !== 'string' ||
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(event.slug) ||
+    event.slug.length > 120
+  )
+    errors.push('Slug must use lowercase letters, numbers and single hyphens.');
+  if (
+    typeof event.title !== 'string' ||
+    !event.title.trim() ||
+    event.title.length > 160
+  )
+    errors.push('Title is required and must be at most 160 characters.');
+  if (
+    typeof event.description !== 'string' ||
+    !event.description.trim() ||
+    event.description.length > 5000
+  )
+    errors.push('Description is required and must be at most 5000 characters.');
+  const times = ['doorsAt', 'startsAt', 'endsAt'] as const;
+  const parsed = times.map((key) =>
+    typeof event[key] === 'string' ? Date.parse(event[key]) : Number.NaN,
+  );
+  if (parsed.some(Number.isNaN))
+    errors.push('Doors, start and end times must be valid timestamps.');
+  else if (!(parsed[0]! <= parsed[1]! && parsed[1]! < parsed[2]!))
+    errors.push(
+      'Doors must be no later than the start, and the end must be after the start.',
+    );
+  if (!eventVisibilities.includes(event.visibility as EventVisibility))
+    errors.push('Choose a valid visibility.');
+  if (
+    !Number.isInteger(event.capacity) ||
+    (event.capacity as number) < 1 ||
+    (event.capacity as number) > 100000
+  )
+    errors.push('Capacity must be a whole number between 1 and 100000.');
+  if (event.artwork !== null) {
+    if (!event.artwork || typeof event.artwork !== 'object')
+      errors.push('Artwork metadata must be an object or null.');
+    else {
+      const artwork = event.artwork as Record<string, unknown>;
+      try {
+        if (
+          typeof artwork.url !== 'string' ||
+          new URL(artwork.url).protocol !== 'https:'
+        )
+          throw new Error();
+      } catch {
+        errors.push('Artwork URL must be a valid HTTPS URL.');
+      }
+      if (
+        typeof artwork.alt !== 'string' ||
+        !artwork.alt.trim() ||
+        artwork.alt.length > 300
+      )
+        errors.push(
+          'Artwork alternative text is required and must be at most 300 characters.',
+        );
+      for (const key of ['width', 'height'] as const) {
+        if (
+          artwork[key] !== null &&
+          (!Number.isInteger(artwork[key]) || (artwork[key] as number) < 1)
+        )
+          errors.push(
+            `Artwork ${key} must be a positive whole number or null.`,
+          );
+      }
+    }
+  }
+  return [...new Set(errors)];
+}
+
 export interface HealthResponse {
   service: 'api' | 'worker';
   status: 'ok';

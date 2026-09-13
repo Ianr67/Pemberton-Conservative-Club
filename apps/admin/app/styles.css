@@ -48,6 +48,7 @@ label {
 }
 input,
 textarea,
+select,
 button {
   border: 2px solid #d2b96c;
   border-radius: 0.25rem;
@@ -72,9 +73,29 @@ button {
   font-weight: 700;
 }
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
+}
+.event-list {
+  display: grid;
+  gap: 1rem;
+  padding-left: 1.25rem;
+}
+.event-artwork {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+dt {
+  color: #d2b96c;
+  font-weight: 700;
+}
+dd {
+  margin: 0.25rem 0 1rem;
 }
 label {
   display: grid;

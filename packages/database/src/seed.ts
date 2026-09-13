@@ -6,6 +6,7 @@ const ids = {
   adminPermission: '30000000-0000-4000-8000-000000000001',
   auditPermission: '30000000-0000-4000-8000-000000000002',
   contentPermission: '30000000-0000-4000-8000-000000000003',
+  eventsPermission: '30000000-0000-4000-8000-000000000004',
   administratorRole: '20000000-0000-4000-8000-000000000001',
   editorRole: '20000000-0000-4000-8000-000000000002',
   administratorUser: '10000000-0000-4000-8000-000000000001',
@@ -15,6 +16,7 @@ const ids = {
   homepagePublishedVersion: '60000000-0000-4000-8000-000000000001',
   clubSettings: '70000000-0000-4000-8000-000000000001',
   clubSettingsPublishedVersion: '71000000-0000-4000-8000-000000000001',
+  venue: '80000000-0000-4000-8000-000000000001',
 } as const;
 
 export async function seedDevelopmentData(
@@ -62,15 +64,21 @@ export async function seedDevelopmentData(
        VALUES
          ($1, 'administration.access', 'Access the administration portal'),
          ($2, 'audit.read', 'Read audit activity'),
-         ($3, 'content.manage', 'Manage website content')
+         ($3, 'content.manage', 'Manage website content'),
+         ($4, 'events.manage', 'Create, edit and publish events')
        ON CONFLICT (id) DO UPDATE SET
          code = EXCLUDED.code,
          description = EXCLUDED.description`,
-      [ids.adminPermission, ids.auditPermission, ids.contentPermission],
+      [
+        ids.adminPermission,
+        ids.auditPermission,
+        ids.contentPermission,
+        ids.eventsPermission,
+      ],
     );
     await client.query(
       `INSERT INTO role_permissions (role_id, permission_id)
-       VALUES ($1, $3), ($1, $4), ($1, $5), ($2, $3), ($2, $5)
+       VALUES ($1, $3), ($1, $4), ($1, $5), ($1, $6), ($2, $3), ($2, $5)
        ON CONFLICT DO NOTHING`,
       [
         ids.administratorRole,
@@ -78,6 +86,7 @@ export async function seedDevelopmentData(
         ids.adminPermission,
         ids.auditPermission,
         ids.contentPermission,
+        ids.eventsPermission,
       ],
     );
     await client.query(
@@ -140,6 +149,139 @@ export async function seedDevelopmentData(
       `UPDATE club_settings SET published_version_id=$1,updated_at=now() WHERE id=$2`,
       [ids.clubSettingsPublishedVersion, ids.clubSettings],
     );
+    await client.query(
+      `INSERT INTO venues(id,name,address_line_1,town,postcode) VALUES($1,'Pemberton Conservative Club','Fictional 12 Club Lane','Pemberton','WN5 0AA') ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name`,
+      [ids.venue],
+    );
+    const events = [
+      [
+        '81000000-0000-4000-8000-000000000001',
+        'pemberton-autumn-social',
+        'Pemberton Autumn Social',
+        'An easy-going evening of live local entertainment and good company.',
+        14,
+        18,
+        19,
+        22,
+        'published',
+        'public',
+        180,
+      ],
+      [
+        '81000000-0000-4000-8000-000000000002',
+        'friday-quiz-night',
+        'Friday Quiz Night',
+        'A friendly team quiz with questions for every generation.',
+        21,
+        19,
+        19.5,
+        22,
+        'published',
+        'public',
+        96,
+      ],
+      [
+        '81000000-0000-4000-8000-000000000003',
+        'festive-quiz-night',
+        'Festive Quiz Night',
+        'Seasonal questions, table challenges and a cheerful club atmosphere.',
+        35,
+        19,
+        19.5,
+        22,
+        'published',
+        'public',
+        96,
+      ],
+      [
+        '81000000-0000-4000-8000-000000000004',
+        'northern-soul-evening',
+        'Northern Soul Evening',
+        'Classic floor-fillers and a welcoming dance floor.',
+        49,
+        18.5,
+        19.5,
+        23,
+        'published',
+        'public',
+        220,
+      ],
+      [
+        '81000000-0000-4000-8000-000000000005',
+        'community-comedy-night',
+        'Community Comedy Night',
+        'A fictional line-up of rising North West comedy performers.',
+        63,
+        19,
+        20,
+        22.5,
+        'published',
+        'public',
+        150,
+      ],
+      [
+        '81000000-0000-4000-8000-000000000006',
+        'winter-brass-concert',
+        'Winter Brass Concert',
+        'An afternoon concert from the fictional Pemberton Borough Brass Band.',
+        77,
+        13.5,
+        14,
+        16.5,
+        'published',
+        'public',
+        180,
+      ],
+      [
+        '81000000-0000-4000-8000-000000000007',
+        'spring-programme-preview',
+        'Spring Programme Preview',
+        'Draft programme announcement for administrator preview.',
+        91,
+        18,
+        19,
+        21,
+        'draft',
+        'public',
+        120,
+      ],
+    ] as const;
+    for (const [
+      id,
+      slug,
+      title,
+      description,
+      days,
+      doors,
+      start,
+      end,
+      status,
+      visibility,
+      capacity,
+    ] of events) {
+      await client.query(
+        `INSERT INTO events(id,venue_id,slug,title,description,doors_at,starts_at,ends_at,status,visibility,capacity,artwork_url,artwork_alt,artwork_width,artwork_height,created_by,updated_by,published_at)
+         VALUES($1,$2,$3,$4,$5,date_trunc('day',now())+($6||' days')::interval+($7||' hours')::interval,date_trunc('day',now())+($6||' days')::interval+($8||' hours')::interval,date_trunc('day',now())+($6||' days')::interval+($9||' hours')::interval,$10,$11,$12,$13,$14,1600,900,$15,$15,CASE WHEN $10='published' THEN now() ELSE NULL END)
+         ON CONFLICT(id) DO UPDATE SET slug=EXCLUDED.slug,title=EXCLUDED.title,description=EXCLUDED.description,doors_at=EXCLUDED.doors_at,starts_at=EXCLUDED.starts_at,ends_at=EXCLUDED.ends_at,status=EXCLUDED.status,visibility=EXCLUDED.visibility,capacity=EXCLUDED.capacity,published_at=EXCLUDED.published_at`,
+        [
+          id,
+          ids.venue,
+          slug,
+          title,
+          description,
+          days,
+          doors,
+          start,
+          end,
+          status,
+          visibility,
+          capacity,
+          `https://images.pemberton-club.example.test/events/${slug}.jpg`,
+          `${title} demonstration artwork`,
+          ids.administratorUser,
+        ],
+      );
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -161,6 +303,8 @@ export async function resetDevelopmentData(
   try {
     await client.query(
       `TRUNCATE TABLE
+         events,
+         venues,
          club_social_links,
          club_opening_times,
          club_setting_versions,

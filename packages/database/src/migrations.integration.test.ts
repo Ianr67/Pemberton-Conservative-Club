@@ -35,6 +35,7 @@ describeWithDatabase('database migrations', () => {
         '000002_administrator_credentials.sql',
         '000003_homepage_content.sql',
         '000004_club_settings.sql',
+        '000005_events.sql',
       ]);
       expect(await migrate(client)).toEqual([]);
       expect(await getMigrationStatus(client)).toEqual([
@@ -42,6 +43,7 @@ describeWithDatabase('database migrations', () => {
         { name: '000002_administrator_credentials.sql', state: 'applied' },
         { name: '000003_homepage_content.sql', state: 'applied' },
         { name: '000004_club_settings.sql', state: 'applied' },
+        { name: '000005_events.sql', state: 'applied' },
       ]);
       const tables = await client.query<{ table_name: string }>(
         `SELECT table_name
@@ -57,6 +59,7 @@ describeWithDatabase('database migrations', () => {
         'club_setting_versions',
         'club_settings',
         'club_social_links',
+        'events',
         'page_versions',
         'pages',
         'permissions',
@@ -65,6 +68,7 @@ describeWithDatabase('database migrations', () => {
         'sessions',
         'user_roles',
         'users',
+        'venues',
       ]);
 
       await seedDevelopmentData(client, 'development');
@@ -73,6 +77,10 @@ describeWithDatabase('database migrations', () => {
         "SELECT count(*) FROM users WHERE email LIKE '%@pemberton-club.example.test'",
       );
       expect(seeded.rows[0]?.count).toBe('2');
+      const seededEvents = await client.query<{ count: string }>(
+        'SELECT count(*) FROM events',
+      );
+      expect(seededEvents.rows[0]?.count).toBe('7');
 
       await resetDevelopmentData(client, 'development');
       const reset = await client.query<{ count: string }>(

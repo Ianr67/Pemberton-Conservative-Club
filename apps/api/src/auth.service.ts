@@ -1,6 +1,10 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { verifyPassword } from '@pcc/database';
 
 import { DatabaseService } from './database.service.js';
@@ -108,6 +112,24 @@ export class AuthService {
         message: 'Sign in is required.',
       });
     return { displayName: row.display_name, email: row.email, id: row.id };
+  }
+
+  async requirePermission(
+    token: string | undefined,
+    permission: string,
+  ): Promise<AuthenticatedAdministrator> {
+    const user = await this.authenticate(token);
+    const result = await this.database.query(
+      `SELECT 1 FROM user_roles ur JOIN role_permissions rp ON rp.role_id=ur.role_id
+       JOIN permissions p ON p.id=rp.permission_id WHERE ur.user_id=$1 AND p.code=$2 LIMIT 1`,
+      [user.id, permission],
+    );
+    if (!result.rows[0])
+      throw new ForbiddenException({
+        code: 'permission_denied',
+        message: 'You do not have permission to manage events.',
+      });
+    return user;
   }
 
   async logout(token: string | undefined): Promise<void> {

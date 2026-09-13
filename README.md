@@ -118,13 +118,13 @@ $env:NODE_ENV = 'development'
 pnpm db:reset
 ```
 
-The reset truncates only `users`, `roles`, `permissions`, their assignments, `sessions`, and `audit_events`, then reapplies the deterministic fixtures. It refuses to connect or change data unless `NODE_ENV` is exactly `development`; `production`, `test`, and missing values all fail closed. It does not drop the database, migrations, other schemas, or the Docker volume.
+The reset truncates only the known demo-owned identity, content, settings, venue, event, session, permission, and audit records, then reapplies the deterministic fixtures. It refuses to connect or change data unless `NODE_ENV` is exactly `development`; `production`, `test`, and missing values all fail closed. It does not drop the database, migrations, other schemas, or the Docker volume.
 
 Use `pnpm db:logs` to inspect PostgreSQL and `pnpm db:down` to stop it. The named development volume is retained by `db:down`; no command in this step deletes database data.
 
 `GET /api/v1/health` is a liveness endpoint and remains healthy when PostgreSQL is unavailable. `GET /api/v1/health/database` checks PostgreSQL directly and returns HTTP 503 with a safe response when it cannot connect.
 
-No business-domain schema is included yet; this migration is limited to the identity, authorization, session, and audit foundations.
+The current schema covers the identity, authorization, session, audit, homepage content, club settings, venue, and event foundations only.
 
 ## Demonstration administrator
 
@@ -142,3 +142,13 @@ Sign in to the administration portal, choose **Manage pages**, and open **Homepa
 ## Club settings slice
 
 The dashboard's **Edit club settings** screen manages the club name, structured postal address and contact details, seven structured daily opening-time records, and supported HTTPS social links. Saving records an audited draft; publishing atomically selects and audits that version. The website reads only published settings from the read-only `GET /api/v1/club-settings` endpoint. Seeded contact details and social profiles are fictional demonstration data.
+
+## Event administration and public event API
+
+The administration dashboard links to event list, create, edit and authenticated preview screens. Users require the `events.manage` permission to read or change event administration records. Publishing and unpublishing update the shared PostgreSQL record and append an audit event atomically.
+
+- `GET /api/v1/events` lists published events whose visibility is `public`.
+- `GET /api/v1/events/:slug` returns a published public or unlisted event by slug.
+- Draft events return `404` from both public endpoints and remain available through authenticated admin preview only.
+
+The development seed provides one fictional venue, six published future events (including two quiz nights), and one draft event. Artwork consists only of external HTTPS metadata and alternative text; this slice has no uploads, tickets, inventory, orders, payments, bookings, memberships, or mobile changes.
