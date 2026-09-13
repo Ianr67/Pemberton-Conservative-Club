@@ -44,6 +44,7 @@ export async function readSharedContent() {
 
 const links = [
   ['/', 'Home'],
+  ['/whats-on', 'What is on'],
   ['/quiz-nights', 'Quiz nights'],
   ['/function-room', 'Function room'],
   ['/sports-and-activities', 'Sports & activities'],

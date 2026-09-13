@@ -71,6 +71,9 @@ export default async function HomePage() {
               </a>
             </li>
             <li>
+              <a href="/whats-on">What is on</a>
+            </li>
+            <li>
               <a href="/quiz-nights">Quiz nights</a>
             </li>
             <li>

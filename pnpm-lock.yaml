@@ -103,6 +103,9 @@ importers:
 
   apps/website:
     dependencies:
+      '@pcc/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       next:
         specifier: ^16.3.5
         version: 16.3.5(@types/node@24.13.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
