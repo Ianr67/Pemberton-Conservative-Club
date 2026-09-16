@@ -1,6 +1,8 @@
-# Pemberton Conservative Club Demo Platform
+# Pemberton Conservative Club Website and CMS
 
-This monorepo contains the foundations for the club's demonstration website, administration portal, shared API, worker, and shared packages.
+This monorepo contains the club's public website, administration portal, shared API, PostgreSQL data layer, and shared packages.
+
+The initial release is deliberately limited to public content and staff content management. It includes administrator authentication, publishing, club settings, media, events, quiz nights, and informational contact, function-room, and membership pages. It does not include tickets, payments, room-booking management, customer or member accounts, membership records or renewals, notifications, or mobile applications.
 
 ## Prerequisites
 
@@ -21,7 +23,7 @@ pnpm build
 - `apps/website` — public Next.js website
 - `apps/admin` — Next.js administration portal
 - `apps/api` — shared NestJS API
-- `apps/worker` — background-work foundation
+- `apps/worker` — retained, inactive background-work foundation; not part of the initial deployment or normal test path
 - `packages/contracts` — shared API contracts
 - `packages/validation` — shared runtime and environment validation
 - `packages/database` — database package boundary
@@ -48,9 +50,8 @@ Copy each application's `.env.example` to `.env.local` for local overrides. The 
 | Public website        | `pnpm --filter @pcc/website dev` | `http://localhost:3000`               |
 | Administration portal | `pnpm --filter @pcc/admin dev`   | `http://localhost:3001`               |
 | API                   | `pnpm --filter @pcc/api dev`     | `http://localhost:3002/api/v1/health` |
-| Worker health server  | `pnpm --filter @pcc/worker dev`  | `http://localhost:3003/health`        |
 
-The repository foundation includes startup pages for both Next.js applications and health responses for the API and worker. PostgreSQL, authentication, domain features, and deployment are deliberately deferred.
+Normal development uses the website, administration portal, API, and PostgreSQL only. The retained worker is not required for any current journey.
 
 ## Local PostgreSQL
 
@@ -139,7 +140,7 @@ This account and password are fictional and development-only. Passwords are stor
 
 Sign in to the administration portal, choose **Manage pages**, and open **Homepage introduction**. Saving creates a new draft version without changing the public endpoint or website. **Preview draft** is authenticated and shows the latest draft. Publishing the selected draft atomically updates the public version and appends `content.homepage_published` to the audit trail. The public website reads only `GET /api/v1/content/homepage-introduction`; no draft content is exposed there.
 
-The same page list also exposes versioned editors for About, Membership, Quiz nights, Function room, and Sports and activities. Their published eyebrow, heading, and introductory body are read by the corresponding public route through `GET /api/v1/content/pages/:slug`. Saving a draft does not affect visitors; publishing updates the shared database pointer and writes a `content.page_published` audit event. Contact details and opening times remain structured club settings, while What is on and event details remain structured event records.
+The same page list also exposes versioned editors for About, Membership information, Quiz nights, Function room, and Sports and activities. Their published eyebrow, heading, and introductory body are read by the corresponding public route through `GET /api/v1/content/pages/:slug`. Membership here is public information only; member accounts, records, renewals, and digital cards are deferred. Saving a draft does not affect visitors; publishing updates the shared database pointer and writes a `content.page_published` audit event. Contact details and opening times remain structured club settings, while What is on and event details remain structured event records.
 
 ## Club settings slice
 
@@ -155,4 +156,8 @@ The administration dashboard links to event list, create, edit and authenticated
 
 The development seed provides one fictional venue, six published future events (including two quiz nights), and one draft event. Event and page editors accept JPEG, PNG, WebP and GIF uploads up to 5 MB and require alternative text before saving. Uploaded files are served through the public API; existing external image URLs remain supported by the contract.
 
-Local uploads default to the API working directory's `.media` folder. Set `MEDIA_STORAGE_PATH` to a persistent mounted directory and `PUBLIC_API_URL` to the externally reachable API `/api/v1` URL when deploying (for example, on a Railway volume). The database stores media metadata only, never image bytes. An S3-compatible storage adapter remains a production follow-up.
+Local development uploads default to the API working directory's `.media` folder. The database stores media metadata only, never image bytes. Local filesystem storage is not the production deployment design: production must use the S3-compatible adapter and credentials documented in the Railway guide once that adapter is implemented. Do not deploy uploads to an ephemeral application filesystem.
+
+## Deferred reference material
+
+Mobile guidance is retained for a possible later phase under `docs/deferred/`. It is not part of the initial release and does not authorise mobile-specific endpoints or application work.
