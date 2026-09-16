@@ -110,6 +110,15 @@ nav a[aria-current='page'] {
 main {
   overflow: hidden;
 }
+.homepage-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 28rem;
+  margin-top: 1.5rem;
+  border-radius: 0.25rem;
+  object-fit: cover;
+}
 .page-hero,
 .intro-panel,
 .details-grid,

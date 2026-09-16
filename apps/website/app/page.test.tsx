@@ -53,6 +53,31 @@ describe('public homepage', () => {
     expect(html).toContain('The function room');
   });
 
+  it('renders a published homepage image with its page-specific alt text', async () => {
+    stubResponses([
+      {
+        ok: true,
+        status: 200,
+        data: {
+          ...introduction,
+          image: {
+            url: 'http://localhost:3002/api/v1/media/70000000-0000-4000-8000-000000000001',
+            alt: 'Members talking in the club lounge',
+            width: 1600,
+            height: 900,
+            mediaId: '70000000-0000-4000-8000-000000000001',
+          },
+        },
+      },
+      { ok: true, status: 200, data: settings },
+    ]);
+    const html = renderToStaticMarkup(await HomePage());
+    expect(html).toContain(
+      'src="/api/media/70000000-0000-4000-8000-000000000001"',
+    );
+    expect(html).toContain('alt="Members talking in the club lounge"');
+  });
+
   it('uses semantic navigation, one h1, labelled sections and a skip link', async () => {
     stubResponses([
       { ok: true, status: 200, data: introduction },

@@ -41,13 +41,76 @@ describe('homepage content states', () => {
     });
     await expect(
       new ContentService({ query } as never).saveDraft(
-        'New draft copy',
+        { introduction: 'New draft copy', image: null },
         administrator,
       ),
     ).resolves.toMatchObject({ state: 'draft', versionNumber: 2 });
-    expect(String(query.mock.calls[0]?.[0])).not.toContain(
-      'published_version_id =',
+    const sql = String(query.mock.calls[0]?.[0]);
+    expect(sql).not.toContain('published_version_id =');
+    expect(sql).toContain('eyebrow, heading, body');
+    expect(query.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining(['New draft copy', null]),
     );
+  });
+
+  it('stores the selected media UUID and clears all image fields on removal', async () => {
+    const imageRow = {
+      id: 'draft-id',
+      introduction: 'New draft copy',
+      state: 'draft',
+      version_number: 2,
+      image_url: 'https://api.example.test/api/v1/media/media-id',
+      image_alt: 'Members talking in the club lounge',
+      image_width: 1600,
+      image_height: 900,
+      image_media_id: '70000000-0000-4000-8000-000000000001',
+    };
+    const query = vi.fn().mockResolvedValue({ rows: [imageRow] });
+    const service = new ContentService({ query } as never);
+    await expect(
+      service.saveDraft(
+        {
+          introduction: 'New draft copy',
+          image: {
+            url: imageRow.image_url,
+            alt: imageRow.image_alt,
+            width: imageRow.image_width,
+            height: imageRow.image_height,
+            mediaId: imageRow.image_media_id,
+          },
+        },
+        administrator,
+      ),
+    ).resolves.toMatchObject({ image: { mediaId: imageRow.image_media_id } });
+    expect(query.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining([imageRow.image_media_id]),
+    );
+
+    query.mockResolvedValueOnce({
+      rows: [
+        {
+          ...imageRow,
+          image_url: null,
+          image_alt: null,
+          image_width: null,
+          image_height: null,
+          image_media_id: null,
+        },
+      ],
+    });
+    await expect(
+      service.saveDraft(
+        { introduction: 'New draft copy', image: null },
+        administrator,
+      ),
+    ).resolves.toMatchObject({ image: null });
+    expect(query.mock.calls[1]?.[1]?.slice(3)).toEqual([
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
   });
 
   it('publishes the selected draft and writes its audit event atomically', async () => {

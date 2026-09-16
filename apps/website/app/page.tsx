@@ -1,8 +1,8 @@
+import type { HomepageContent } from '@pcc/contracts';
+import { browserImageUrl } from './media-url';
+
 export const dynamic = 'force-dynamic';
 
-interface HomepageContent {
-  introduction: string;
-}
 interface ClubSettings {
   clubName: string;
   addressLine1: string;
@@ -100,7 +100,16 @@ export default async function HomePage() {
             <p className="eyebrow">A warm welcome in Pemberton</p>
             <h1 id="home-heading">Good company, right at the heart of town.</h1>
             {content.status === 'ready' ? (
-              <p className="introduction">{content.data.introduction}</p>
+              <>
+                <p className="introduction">{content.data.introduction}</p>
+                {content.data.image && (
+                  <img
+                    className="homepage-image"
+                    src={browserImageUrl(content.data.image.url)}
+                    alt={content.data.image.alt}
+                  />
+                )}
+              </>
             ) : content.status === 'empty' ? (
               <p className="content-notice" role="status">
                 Our welcome message will be published here soon.

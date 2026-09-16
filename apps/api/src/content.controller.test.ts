@@ -21,4 +21,40 @@ describe('ContentController draft access', () => {
     );
     expect(content.pageEditorState).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['editor', (controller: ContentController) => controller.editor(undefined)],
+    [
+      'preview',
+      (controller: ContentController) => controller.preview(undefined),
+    ],
+    [
+      'save',
+      (controller: ContentController) =>
+        controller.save(undefined, { introduction: 'Welcome.' }),
+    ],
+    [
+      'publish',
+      (controller: ContentController) =>
+        controller.publish(undefined, { versionId: 'draft-id' }),
+    ],
+  ])('protects homepage %s with content.manage', async (_, invoke) => {
+    const forbidden = Object.assign(new Error('forbidden'), { status: 403 });
+    const auth = {
+      requirePermission: vi.fn().mockRejectedValue(forbidden),
+    };
+    const content = {
+      editorState: vi.fn(),
+      latestDraft: vi.fn(),
+      saveDraft: vi.fn(),
+      publish: vi.fn(),
+    };
+    const controller = new ContentController(content as never, auth as never);
+
+    await expect(invoke(controller)).rejects.toBe(forbidden);
+    expect(auth.requirePermission).toHaveBeenCalledWith(
+      undefined,
+      'content.manage',
+    );
+  });
 });

@@ -23,6 +23,36 @@ export interface PageImage extends EventArtwork {
   mediaId: string | null;
 }
 
+export interface HomepageContent {
+  id: string;
+  introduction: string;
+  image?: PageImage | null;
+  state: 'draft' | 'published';
+  versionNumber: number;
+}
+
+export interface HomepageContentInput {
+  introduction: string;
+  image?: PageImage | null;
+}
+
+export function validateHomepageContentInput(value: unknown): string[] {
+  if (!value || typeof value !== 'object')
+    return ['Homepage content is required.'];
+  const homepage = value as Record<string, unknown>;
+  const errors: string[] = [];
+  if (
+    typeof homepage.introduction !== 'string' ||
+    !homepage.introduction.trim() ||
+    homepage.introduction.length > 1000
+  )
+    errors.push(
+      'Introduction is required and must be at most 1000 characters.',
+    );
+  errors.push(...validatePageImage(homepage.image));
+  return errors;
+}
+
 export function validatePageContentInput(value: unknown): string[] {
   if (!value || typeof value !== 'object') return ['Page content is required.'];
   const page = value as Record<string, unknown>;
@@ -45,19 +75,7 @@ export function validatePageContentInput(value: unknown): string[] {
     page.body.length > 5000
   )
     errors.push('Body is required and must be at most 5000 characters.');
-  errors.push(...validateImage(page.image, 'Page image'));
-  if (
-    page.image &&
-    typeof page.image === 'object' &&
-    !(
-      (page.image as Record<string, unknown>).mediaId === null ||
-      (typeof (page.image as Record<string, unknown>).mediaId === 'string' &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          (page.image as Record<string, unknown>).mediaId as string,
-        ))
-    )
-  )
-    errors.push('Page image must reference a valid media record.');
+  errors.push(...validatePageImage(page.image));
   return errors;
 }
 
@@ -126,6 +144,23 @@ function validateImage(value: unknown, label: string): string[] {
     )
       errors.push(`${label} ${key} must be a positive whole number or null.`);
   }
+  return errors;
+}
+
+function validatePageImage(value: unknown): string[] {
+  const errors = validateImage(value, 'Page image');
+  if (
+    value &&
+    typeof value === 'object' &&
+    !(
+      (value as Record<string, unknown>).mediaId === null ||
+      (typeof (value as Record<string, unknown>).mediaId === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          (value as Record<string, unknown>).mediaId as string,
+        ))
+    )
+  )
+    errors.push('Page image must reference a valid media record.');
   return errors;
 }
 

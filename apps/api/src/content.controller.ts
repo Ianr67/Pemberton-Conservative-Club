@@ -12,7 +12,9 @@ import { readSession } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { ContentService } from './content.service.js';
 import {
+  validateHomepageContentInput,
   validatePageContentInput,
+  type HomepageContentInput,
   type PageContentInput,
 } from '@pcc/contracts';
 
@@ -103,34 +105,38 @@ export class ContentController {
   @Get('admin/pages/homepage-introduction/preview') async preview(
     @Headers('cookie') cookie?: string,
   ) {
-    await this.auth.authenticate(readSession(cookie));
+    await this.auth.requirePermission(readSession(cookie), 'content.manage');
     return { draft: await this.content.latestDraft() };
   }
   @Post('admin/pages/homepage-introduction/drafts') async save(
     @Headers('cookie') cookie: string | undefined,
     @Body() body: unknown,
   ) {
-    const administrator = await this.auth.authenticate(readSession(cookie));
-    const value =
-      typeof body === 'object' && body
-        ? (body as Record<string, unknown>).introduction
-        : undefined;
-    if (
-      typeof value !== 'string' ||
-      value.trim().length < 1 ||
-      value.length > 1000
-    )
+    const administrator = await this.auth.requirePermission(
+      readSession(cookie),
+      'content.manage',
+    );
+    const errors = validateHomepageContentInput(body);
+    if (errors.length)
       throw new BadRequestException({
         code: 'invalid_introduction',
-        message: 'Introduction must be between 1 and 1000 characters.',
+        message: errors.join(' '),
       });
-    return { draft: await this.content.saveDraft(value.trim(), administrator) };
+    return {
+      draft: await this.content.saveDraft(
+        body as HomepageContentInput,
+        administrator,
+      ),
+    };
   }
   @Post('admin/pages/homepage-introduction/publish') async publish(
     @Headers('cookie') cookie: string | undefined,
     @Body() body: unknown,
   ) {
-    const administrator = await this.auth.authenticate(readSession(cookie));
+    const administrator = await this.auth.requirePermission(
+      readSession(cookie),
+      'content.manage',
+    );
     const id =
       typeof body === 'object' && body
         ? (body as Record<string, unknown>).versionId

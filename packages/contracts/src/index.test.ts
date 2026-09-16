@@ -5,6 +5,7 @@ import {
   clubDays,
   validateClubSettings,
   validateEventInput,
+  validateHomepageContentInput,
   validatePageContentInput,
 } from './index.js';
 
@@ -12,6 +13,36 @@ describe('API contract foundation', () => {
   it('uses the documented API version', () => {
     expect(apiVersion).toBe('v1');
   });
+});
+
+describe('homepage content validation', () => {
+  const image = {
+    url: 'https://example.test/media/homepage.jpg',
+    alt: 'Members talking in the club lounge',
+    width: 1600,
+    height: 900,
+    mediaId: '70000000-0000-4000-8000-000000000001',
+  };
+
+  it('accepts an introduction with a selected media record', () =>
+    expect(
+      validateHomepageContentInput({ introduction: 'Welcome.', image }),
+    ).toEqual([]));
+
+  it('requires trimmed page-specific alternative text', () =>
+    expect(
+      validateHomepageContentInput({
+        introduction: 'Welcome.',
+        image: { ...image, alt: '   ' },
+      }),
+    ).toContain(
+      'Page image alternative text is required and must be at most 300 characters.',
+    ));
+
+  it('allows an image to be deliberately removed', () =>
+    expect(
+      validateHomepageContentInput({ introduction: 'Welcome.', image: null }),
+    ).toEqual([]));
 });
 
 describe('page content validation', () => {
