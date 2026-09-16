@@ -8,7 +8,31 @@ Membership information remains normal published website content. Contact and fun
 
 ## Required services
 
-| Service    | Public                 | Purpose                                     |
+| Service    | Public                 | Purpose                                     |Documentation and configuration alignment is complete on branch chore/website-cms-scope-alignment.
+
+Changes made:
+
+Updated [README.md](C:\Users\ianri\Documents\Pemberton Conservative Club\README.md) for the corrected initial scope.
+Reworked [Railway Hosting Guideline.md](C:\Users\ianri\Documents\Pemberton Conservative Club\Railway Hosting Guideline.md) around website, admin, API, PostgreSQL, and S3-compatible storage only.
+Reworked [Project Testing Guide.md](C:\Users\ianri\Documents\Pemberton Conservative Club\Project Testing Guide.md) to exclude the worker from normal journeys.
+Moved both mobile guides into [docs/deferred](C:\Users\ianri\Documents\Pemberton Conservative Club\docs\deferred) with a deferral notice.
+Clarified in [apps/api/.env.example](C:\Users\ianri\Documents\Pemberton Conservative Club\apps\api.env.example) that filesystem media storage is development-only.
+Kept Membership Information explicitly in scope.
+Kept contact and function-room pages informational.
+Did not alter application code, migrations, or database records.
+Preserved the pre-existing uncommitted AGENTS.md change.
+Verification:
+
+pnpm format:check — passed after formatting the Railway guide
+pnpm lint — passed
+pnpm typecheck — passed
+pnpm test — passed; 3 database tests skipped because DATABASE_URL was unavailable to that process
+pnpm build — passed outside the sandbox; the initial sandbox run encountered spawn EPERM
+git diff --check — passed
+Migration/application-code diff — empty
+Database integration and migration tests could not be completed because Docker Desktop is not running.
+
+S3 storage has only been documented in this step; it has not yet been implemented or represented as production-ready. The next logical step is the S3-compatible storage adapter with local-development fallback and focused tests.
 | ---------- | ---------------------- | ------------------------------------------- |
 | `website`  | Yes                    | Public Next.js website                      |
 | `admin`    | Yes                    | Authenticated CMS                           |
@@ -23,7 +47,7 @@ Use separate staging and production databases and buckets. `compose.yaml` is for
 Before deployment:
 
 1. Add and test production `start` scripts for both Next.js applications.
-2. Configure and smoke-test the S3-compatible adapter; the filesystem adapter is local-development only.
+2. Implement and test the S3-compatible adapter; the current filesystem adapter is local-development only.
 3. Test service-specific Railway configuration and API binding to Railway's `PORT`.
 4. Complete authentication, cookie, proxy, CORS, security-header, backup, restore, monitoring, and secret-rotation reviews.
 5. Replace development administrator fixtures with an approved provisioning process.
@@ -65,7 +89,7 @@ S3_SECRET_ACCESS_KEY=<secret>
 S3_FORCE_PATH_STYLE=<true only when required>
 ```
 
-`MEDIA_STORAGE_DRIVER=s3` is mandatory for production and startup fails when required S3 values are missing or the endpoint is not HTTPS. Do not configure `MEDIA_STORAGE_PATH` in production. Keep the bucket private, block anonymous writes/listing, use least-privilege credentials, and configure encryption, lifecycle, versioning, and recovery deliberately.
+These S3 names are the intended upcoming adapter contract and must be confirmed by implementation and tests. Do not configure `MEDIA_STORAGE_PATH` in production. Keep the bucket private, block anonymous writes/listing, use least-privilege credentials, and configure encryption, lifecycle, versioning, and recovery deliberately.
 
 Website:
 
