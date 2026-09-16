@@ -53,6 +53,75 @@ const links = [
   ['/contact', 'Contact'],
 ] as const;
 
+export function SiteHeader({
+  current,
+  clubName,
+}: {
+  current: string;
+  clubName: string;
+}) {
+  const navigation = (
+    <ul>
+      {links.map(([href, label]) => (
+        <li key={href}>
+          <a href={href} aria-current={current === href ? 'page' : undefined}>
+            {label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <header className="site-header">
+      <a className="brand" href="/" aria-label={`${clubName}, home`}>
+        <span className="brand-mark" aria-hidden="true">
+          PC
+        </span>
+        <span>{clubName}</span>
+      </a>
+      <nav className="desktop-navigation" aria-label="Main navigation">
+        {navigation}
+      </nav>
+      <details className="mobile-navigation">
+        <summary>Menu</summary>
+        <nav aria-label="Main navigation">{navigation}</nav>
+      </details>
+    </header>
+  );
+}
+
+export function SiteFooter({ clubName }: { clubName: string }) {
+  return (
+    <footer>
+      <div className="footer-brand">
+        <span className="brand-mark" aria-hidden="true">
+          PC
+        </span>
+        <div>
+          <p>{clubName}</p>
+          <small>Good company in the heart of Pemberton</small>
+        </div>
+      </div>
+      <nav aria-label="Footer navigation">
+        <a href="/">Home</a>
+        <a href="/whats-on">Events</a>
+        <a href="/function-room">Function room</a>
+        <a href="/membership">Membership</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      <nav className="policy-navigation" aria-label="Policy navigation">
+        <a href="/policies/privacy">Privacy</a>
+        <a href="/policies/cookies">Cookies</a>
+        <a href="/policies/accessibility">Accessibility</a>
+      </nav>
+      <p className="footer-legal">
+        © {new Date().getFullYear()} {clubName}. Demonstration environment.
+      </p>
+    </footer>
+  );
+}
+
 export function SiteShell({
   current,
   clubName = 'Pemberton Conservative Club',
@@ -70,40 +139,9 @@ export function SiteShell({
       <div className="demo-banner" role="note">
         Demonstration website
       </div>
-      <header className="site-header">
-        <a className="brand" href="/" aria-label={`${clubName}, home`}>
-          <span className="brand-mark" aria-hidden="true">
-            PC
-          </span>
-          <span>{clubName}</span>
-        </a>
-        <nav aria-label="Main navigation">
-          <ul>
-            {links.map(([href, label]) => (
-              <li key={href}>
-                <a
-                  href={href}
-                  aria-current={current === href ? 'page' : undefined}
-                >
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader current={current} clubName={clubName} />
       <main id="main-content">{children}</main>
-      <footer>
-        <div>
-          <p>{clubName}</p>
-          <p>Demonstration environment — no real customer data is used.</p>
-        </div>
-        <nav aria-label="Policy navigation">
-          <a href="/policies/privacy">Privacy</a>
-          <a href="/policies/cookies">Cookies</a>
-          <a href="/policies/accessibility">Accessibility</a>
-        </nav>
-      </footer>
+      <SiteFooter clubName={clubName} />
     </>
   );
 }
@@ -175,7 +213,7 @@ export function ContactSummary({
               {s.openingTimes.map((x) => (
                 <div key={x.day}>
                   <dt>{x.day}</dt>
-                  <dd>
+                  <dd data-closed={x.isClosed || undefined}>
                     {x.isClosed ? 'Closed' : `${x.opensAt}–${x.closesAt}`}
                   </dd>
                 </div>

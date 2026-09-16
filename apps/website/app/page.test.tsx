@@ -99,7 +99,41 @@ describe('public homepage', () => {
     const html = renderToStaticMarkup(await HomePage());
     expect(html).toContain('welcome message will be published');
     expect(html).toContain('contact details will be published');
-    expect(html.match(/role="status"/g)).toHaveLength(2);
+    expect(html).toContain('next programme will be published');
+    expect(html.match(/role="status"/g)).toHaveLength(3);
+  });
+
+  it('shows published events and the CMS function-room image', async () => {
+    const event = {
+      id: 'event-1',
+      slug: 'quiz-night',
+      title: 'Quiz Night',
+      description: 'A friendly evening quiz.',
+      startsAt: '2027-04-12T18:30:00.000Z',
+      endsAt: '2027-04-12T21:30:00.000Z',
+      venue: { id: 'venue-1', name: 'Club lounge' },
+    };
+    stubResponses([
+      { ok: true, status: 200, data: introduction },
+      { ok: true, status: 200, data: settings },
+      { ok: true, status: 200, data: { events: [event] } },
+      {
+        ok: true,
+        status: 200,
+        data: {
+          image: {
+            url: 'https://images.example.test/function-room.jpg',
+            alt: 'The function room set for a celebration',
+          },
+        },
+      },
+    ]);
+
+    const html = renderToStaticMarkup(await HomePage());
+    expect(html).toContain('Quiz Night');
+    expect(html).toContain('href="/whats-on/quiz-night"');
+    expect(html).toContain('View all events');
+    expect(html).toContain('alt="The function room set for a celebration"');
   });
 
   it('keeps the page usable and announces independent API failures', async () => {

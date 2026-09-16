@@ -4,12 +4,22 @@
   font-family: Arial, sans-serif;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
+  min-width: 0;
   margin: 0;
+}
+
+img,
+svg {
+  max-width: 100%;
 }
 
 main {
@@ -50,6 +60,7 @@ input,
 textarea,
 select,
 button {
+  max-width: 100%;
   border: 2px solid #d2b96c;
   border-radius: 0.25rem;
   font: inherit;
@@ -60,6 +71,9 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+.actions > * {
+  min-width: 0;
 }
 .button-link {
   background: #f6f0e4;
@@ -150,6 +164,7 @@ a:focus-visible {
 }
 .delete-control {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -222,6 +237,9 @@ button:disabled {
   background: linear-gradient(105deg, #061c2e, #0b2940);
   box-shadow: 0 2px 8px #00101d55;
   z-index: 2;
+}
+.admin-topbar > * {
+  min-width: 0;
 }
 .brand-mark {
   display: flex;
@@ -496,6 +514,9 @@ button:disabled {
   background: white;
   box-shadow: 0 1px 3px #13283b08;
 }
+.metric-card > div {
+  min-width: 0;
+}
 .metric-icon {
   display: grid;
   place-items: center;
@@ -557,6 +578,12 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+.quick-actions b,
+.quick-actions small,
+.event-copy span,
+.event-copy small {
+  overflow-wrap: anywhere;
 }
 .quick-actions b {
   font-size: 16px;
@@ -876,20 +903,39 @@ button:disabled {
     min-height: 0;
   }
   .admin-sidebar nav {
-    display: flex;
-    overflow-x: auto;
-    padding: 7px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: visible;
+    padding: 6px 8px;
   }
   .admin-sidebar nav > a,
   .admin-sidebar nav > span {
-    min-width: 48px;
-    height: 45px;
+    min-width: 0;
+    min-height: 62px;
+    height: auto;
+    padding: 5px 3px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    text-align: center;
+  }
+  .admin-sidebar nav > a > span:last-child {
+    display: block;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+  .admin-sidebar nav > .nav-pending {
+    display: none;
   }
   .admin-sidebar nav > a.active::before {
     left: 0;
-    bottom: -7px;
+    bottom: -6px;
     width: 100%;
     height: 3px;
+  }
+  .admin-sidebar nav > a.active .dash-icon {
+    width: 24px;
+    height: 24px;
   }
   .dashboard-main {
     padding: 18px 14px;
@@ -1122,6 +1168,21 @@ button:disabled {
 .admin-page-content [role='status'],
 .admin-page-content [role='alert'] {
   font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.media-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (max-width: 950px) and (min-width: 781px) {
+  .metric-grid,
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1100px) {
@@ -1141,12 +1202,14 @@ button:disabled {
     height: auto;
   }
   .admin-page-shell .page-sidebar nav {
-    display: flex;
+    display: grid;
   }
   .admin-page-shell .page-sidebar nav > a {
-    min-width: 52px;
+    min-width: 0;
   }
-  .admin-page-shell .page-sidebar nav > a > span:last-child,
+  .admin-page-shell .page-sidebar nav > a > span:last-child {
+    display: block;
+  }
   .admin-page-shell .sidebar-signout,
   .admin-page-shell .sidebar-footer {
     display: none;
@@ -1161,5 +1224,48 @@ button:disabled {
   }
   .environment-chip {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  main {
+    width: min(100% - 1.25rem, 48rem);
+    padding-block: 3rem;
+  }
+  .admin-topbar {
+    gap: 10px;
+    padding-inline: 10px;
+  }
+  .brand-mark > span:last-child {
+    min-width: 0;
+  }
+  .brand-mark b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .admin-page-content {
+    padding-inline: 10px;
+  }
+  .admin-page-content form,
+  .admin-page-content main > section,
+  .admin-page-content .event-list {
+    padding: 13px;
+  }
+  .admin-page-content .actions > *,
+  .admin-page-content .button-link {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  .media-library ul {
+    grid-template-columns: repeat(auto-fill, minmax(min(7.5rem, 100%), 1fr));
+  }
+  .media-pagination > * {
+    width: 100%;
+    text-align: center;
+  }
+  .event-list {
+    padding-left: 0.75rem;
   }
 }

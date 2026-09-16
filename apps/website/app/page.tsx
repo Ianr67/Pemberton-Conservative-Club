@@ -1,5 +1,7 @@
-import type { HomepageContent } from '@pcc/contracts';
+import type { HomepageContent, PageContent } from '@pcc/contracts';
 import { browserImageUrl } from './media-url';
+import { getEvents } from './event-api';
+import { SiteFooter, SiteHeader } from './site';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +38,25 @@ async function readApi<T>(url: string): Promise<ApiResult<T>> {
 const phoneHref = (value: string) => value.replace(/[^+\d]/g, '');
 const platformLabel = (value: string) =>
   value === 'x' ? 'X' : `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+const eventDate = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London',
+  day: '2-digit',
+  month: 'short',
+});
+const eventTime = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
 
 export default async function HomePage() {
   const base = process.env.API_BASE_URL ?? 'http://localhost:3002/api/v1';
-  const [content, settings] = await Promise.all([
+  const [content, settings, events, functionRoom] = await Promise.all([
     readApi<HomepageContent>(`${base}/content/homepage-introduction`),
     readApi<ClubSettings>(`${base}/club-settings`),
+    getEvents(),
+    readApi<PageContent>(`${base}/content/pages/function-room`),
   ]);
   const clubName =
     settings.status === 'ready'
@@ -56,44 +71,7 @@ export default async function HomePage() {
       <div className="demo-banner" role="note">
         Demonstration website
       </div>
-      <header className="site-header">
-        <a className="brand" href="/" aria-label={`${clubName}, home`}>
-          <span className="brand-mark" aria-hidden="true">
-            PC
-          </span>
-          <span>{clubName}</span>
-        </a>
-        <nav aria-label="Main navigation">
-          <ul>
-            <li>
-              <a href="/" aria-current="page">
-                Home
-              </a>
-            </li>
-            <li>
-              <a href="/whats-on">What is on</a>
-            </li>
-            <li>
-              <a href="/quiz-nights">Quiz nights</a>
-            </li>
-            <li>
-              <a href="/function-room">Function room</a>
-            </li>
-            <li>
-              <a href="/sports-and-activities">Sports &amp; activities</a>
-            </li>
-            <li>
-              <a href="/membership">Membership</a>
-            </li>
-            <li>
-              <a href="/about">About</a>
-            </li>
-            <li>
-              <a href="/contact">Contact</a>
-            </li>
-          </ul>
-        </nav>
-      </header>
+      <SiteHeader current="/" clubName={clubName} />
       <main id="main-content">
         <section className="hero" id="home" aria-labelledby="home-heading">
           <div className="hero-copy">
@@ -109,6 +87,9 @@ export default async function HomePage() {
                     alt={content.data.image.alt}
                   />
                 )}
+                <a className="button-link hero-action" href="/about">
+                  About our club <span aria-hidden="true">→</span>
+                </a>
               </>
             ) : content.status === 'empty' ? (
               <p className="content-notice" role="status">
@@ -135,18 +116,38 @@ export default async function HomePage() {
             <p className="eyebrow">Coming up</p>
             <h2 id="events-heading">A place to meet, play and enjoy.</h2>
           </div>
-          <div className="placeholder-card">
-            <span className="card-number" aria-hidden="true">
-              01
-            </span>
-            <div>
-              <h3>Upcoming events</h3>
-              <p>
-                Our programme of club nights, live entertainment and community
-                gatherings will appear here soon.
-              </p>
-            </div>
-            <span className="status-pill">Programme coming soon</span>
+          <div className="homepage-events">
+            {events.status === 'ready' && events.data.length > 0 ? (
+              <>
+                {events.data.slice(0, 3).map((event) => (
+                  <article className="homepage-event" key={event.id}>
+                    <time dateTime={event.startsAt}>
+                      {eventDate
+                        .formatToParts(new Date(event.startsAt))
+                        .filter((part) => part.type !== 'literal')
+                        .map((part) => (
+                          <span key={part.type}>{part.value}</span>
+                        ))}
+                    </time>
+                    <div>
+                      <h3>{event.title}</h3>
+                      <p>{eventTime.format(new Date(event.startsAt))}</p>
+                      <a href={`/whats-on/${event.slug}`}>
+                        View details <span aria-hidden="true">→</span>
+                      </a>
+                    </div>
+                  </article>
+                ))}
+                <a className="outline-button" href="/whats-on">
+                  View all events <span aria-hidden="true">→</span>
+                </a>
+              </>
+            ) : (
+              <div className="quiet-status" role="status">
+                <h3>Upcoming events</h3>
+                <p>Our next programme will be published here soon.</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -155,10 +156,18 @@ export default async function HomePage() {
           id="function-room"
           aria-labelledby="room-heading"
         >
-          <div className="room-art" aria-hidden="true">
-            <span>Celebrate</span>
-            <span>together</span>
-          </div>
+          {functionRoom.status === 'ready' && functionRoom.data.image ? (
+            <img
+              className="room-photo"
+              src={browserImageUrl(functionRoom.data.image.url)}
+              alt={functionRoom.data.image.alt}
+            />
+          ) : (
+            <div className="room-art" aria-hidden="true">
+              <span>Celebrate</span>
+              <span>together</span>
+            </div>
+          )}
           <div className="room-copy">
             <p className="eyebrow">Your occasion, our place</p>
             <h2 id="room-heading">The function room</h2>
@@ -166,7 +175,9 @@ export default async function HomePage() {
               A welcoming setting for family celebrations, community groups and
               special occasions. Full room details will be available soon.
             </p>
-            <p className="status-line">Function-room information coming soon</p>
+            <a className="outline-button" href="/function-room">
+              Enquire about functions <span aria-hidden="true">→</span>
+            </a>
           </div>
         </section>
 
@@ -188,7 +199,7 @@ export default async function HomePage() {
                     {settings.data.openingTimes.map((hours) => (
                       <div key={hours.day}>
                         <dt>{hours.day}</dt>
-                        <dd>
+                        <dd data-closed={hours.isClosed || undefined}>
                           {hours.isClosed
                             ? 'Closed'
                             : `${hours.opensAt}–${hours.closesAt}`}
@@ -219,15 +230,33 @@ export default async function HomePage() {
                 </address>
                 <ul className="contact-list">
                   <li>
-                    <span>Telephone</span>
+                    <span>Call us</span>
                     <a href={`tel:${phoneHref(settings.data.telephone)}`}>
-                      {settings.data.telephone}
+                      {settings.data.telephone}{' '}
+                      <span aria-hidden="true">→</span>
                     </a>
                   </li>
                   <li>
-                    <span>Email</span>
+                    <span>Email us</span>
                     <a href={`mailto:${settings.data.email}`}>
-                      {settings.data.email}
+                      {settings.data.email} <span aria-hidden="true">→</span>
+                    </a>
+                  </li>
+                  <li>
+                    <span>Visit us</span>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        [
+                          settings.data.addressLine1,
+                          settings.data.addressLine2,
+                          settings.data.town,
+                          settings.data.postcode,
+                        ]
+                          .filter(Boolean)
+                          .join(', '),
+                      )}`}
+                    >
+                      Get directions <span aria-hidden="true">→</span>
                     </a>
                   </li>
                 </ul>
@@ -254,10 +283,7 @@ export default async function HomePage() {
           )}
         </section>
       </main>
-      <footer>
-        <p>{clubName}</p>
-        <p>Demonstration environment — no real customer data is used.</p>
-      </footer>
+      <SiteFooter clubName={clubName} />
     </>
   );
 }
