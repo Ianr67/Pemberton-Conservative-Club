@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Header,
   Headers,
   Param,
   Post,
+  Query,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -35,8 +37,35 @@ export class MediaController {
       | { originalname: string; mimetype: string; size: number; buffer: Buffer }
       | undefined,
   ) {
-    const actor = await this.auth.authenticate(readSession(cookie));
+    const actor = await this.auth.requirePermission(
+      readSession(cookie),
+      'content.manage',
+    );
     return this.media.upload(file, actor);
+  }
+
+  @Get('admin/media')
+  async library(
+    @Headers('cookie') cookie: string | undefined,
+    @Query('page') pageValue?: string,
+    @Query('pageSize') pageSizeValue?: string,
+  ) {
+    await this.auth.requirePermission(readSession(cookie), 'content.manage');
+    const page = pageValue === undefined ? 1 : Number(pageValue);
+    const pageSize = pageSizeValue === undefined ? 24 : Number(pageSizeValue);
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      !Number.isInteger(pageSize) ||
+      pageSize < 1 ||
+      pageSize > 50
+    )
+      throw new BadRequestException({
+        code: 'invalid_pagination',
+        message:
+          'Page must be positive and page size must be between 1 and 50.',
+      });
+    return this.media.list(page, pageSize);
   }
 
   @Get('media/:id')

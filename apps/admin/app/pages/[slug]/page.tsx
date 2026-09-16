@@ -4,7 +4,7 @@ import type { PageContent } from '@pcc/contracts';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { EventArtwork } from '@pcc/contracts';
+import type { PageImage } from '@pcc/contracts';
 import { ImageUpload } from '../../image-upload';
 
 export default function PageEditor() {
@@ -14,7 +14,7 @@ export default function PageEditor() {
   const [eyebrow, setEyebrow] = useState('');
   const [heading, setHeading] = useState('');
   const [body, setBody] = useState('');
-  const [image, setImage] = useState<EventArtwork | null>(null);
+  const [image, setImage] = useState<PageImage | null>(null);
   const [message, setMessage] = useState('Loading…');
   const [pending, setPending] = useState(false);
 
@@ -152,6 +152,11 @@ export default function PageEditor() {
           >
             Publish draft
           </button>
+          {draft && (
+            <Link className="button-link" href={`/pages/${slug}/preview`}>
+              Preview draft
+            </Link>
+          )}
           <a className="button-link" href={`http://localhost:3000/${slug}`}>
             View published page
           </a>

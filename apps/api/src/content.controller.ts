@@ -29,20 +29,20 @@ export class ContentController {
     return this.content.publishedPage(slug);
   }
   @Get('admin/pages') async pages(@Headers('cookie') cookie?: string) {
-    await this.auth.authenticate(readSession(cookie));
+    await this.auth.requirePermission(readSession(cookie), 'content.manage');
     return this.content.listPages();
   }
   @Get('admin/pages/homepage-introduction') async editor(
     @Headers('cookie') cookie?: string,
   ) {
-    await this.auth.authenticate(readSession(cookie));
+    await this.auth.requirePermission(readSession(cookie), 'content.manage');
     return this.content.editorState();
   }
   @Get('admin/pages/:slug') async pageEditor(
     @Headers('cookie') cookie: string | undefined,
     @Param('slug') slug: string,
   ) {
-    await this.auth.authenticate(readSession(cookie));
+    await this.auth.requirePermission(readSession(cookie), 'content.manage');
     return this.content.pageEditorState(slug);
   }
   @Post('admin/pages/:slug/drafts') async savePage(
@@ -50,7 +50,10 @@ export class ContentController {
     @Param('slug') slug: string,
     @Body() body: unknown,
   ) {
-    const administrator = await this.auth.authenticate(readSession(cookie));
+    const administrator = await this.auth.requirePermission(
+      readSession(cookie),
+      'content.manage',
+    );
     const errors = validatePageContentInput(body);
     if (errors.length)
       throw new BadRequestException({
@@ -70,7 +73,10 @@ export class ContentController {
     @Param('slug') slug: string,
     @Body() body: unknown,
   ) {
-    const administrator = await this.auth.authenticate(readSession(cookie));
+    const administrator = await this.auth.requirePermission(
+      readSession(cookie),
+      'content.manage',
+    );
     const versionId =
       typeof body === 'object' && body
         ? (body as Record<string, unknown>).versionId
@@ -88,7 +94,10 @@ export class ContentController {
     @Headers('cookie') cookie: string | undefined,
     @Param('slug') slug: string,
   ) {
-    const administrator = await this.auth.authenticate(readSession(cookie));
+    const administrator = await this.auth.requirePermission(
+      readSession(cookie),
+      'content.manage',
+    );
     return this.content.deletePage(slug, administrator);
   }
   @Get('admin/pages/homepage-introduction/preview') async preview(

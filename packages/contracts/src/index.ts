@@ -7,7 +7,7 @@ export interface PageContent {
   eyebrow: string;
   heading: string;
   body: string;
-  image: EventArtwork | null;
+  image: PageImage | null;
   state: 'draft' | 'published';
   versionNumber: number;
 }
@@ -16,7 +16,11 @@ export interface PageContentInput {
   eyebrow: string;
   heading: string;
   body: string;
-  image?: EventArtwork | null;
+  image?: PageImage | null;
+}
+
+export interface PageImage extends EventArtwork {
+  mediaId: string | null;
 }
 
 export function validatePageContentInput(value: unknown): string[] {
@@ -42,6 +46,18 @@ export function validatePageContentInput(value: unknown): string[] {
   )
     errors.push('Body is required and must be at most 5000 characters.');
   errors.push(...validateImage(page.image, 'Page image'));
+  if (
+    page.image &&
+    typeof page.image === 'object' &&
+    !(
+      (page.image as Record<string, unknown>).mediaId === null ||
+      (typeof (page.image as Record<string, unknown>).mediaId === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          (page.image as Record<string, unknown>).mediaId as string,
+        ))
+    )
+  )
+    errors.push('Page image must reference a valid media record.');
   return errors;
 }
 
@@ -59,6 +75,20 @@ export interface EventArtwork {
 
 export interface MediaUpload extends EventArtwork {
   id: string;
+}
+
+export interface MediaLibraryItem extends MediaUpload {
+  originalFilename: string;
+  mimeType: string;
+  byteSize: number;
+  createdAt: string;
+}
+
+export interface MediaLibraryPage {
+  media: MediaLibraryItem[];
+  page: number;
+  pageSize: number;
+  total: number;
 }
 
 function validateImage(value: unknown, label: string): string[] {

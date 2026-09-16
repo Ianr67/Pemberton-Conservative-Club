@@ -8,7 +8,7 @@ Membership information remains normal published website content. Contact and fun
 
 ## Required services
 
-| Service    | Public                 | Purpose                                     |Documentation and configuration alignment is complete on branch chore/website-cms-scope-alignment.
+| Service | Public | Purpose |Documentation and configuration alignment is complete on branch chore/website-cms-scope-alignment.
 
 Changes made:
 
@@ -34,11 +34,11 @@ Database integration and migration tests could not be completed because Docker D
 
 S3 storage has only been documented in this step; it has not yet been implemented or represented as production-ready. The next logical step is the S3-compatible storage adapter with local-development fallback and focused tests.
 | ---------- | ---------------------- | ------------------------------------------- |
-| `website`  | Yes                    | Public Next.js website                      |
-| `admin`    | Yes                    | Authenticated CMS                           |
-| `api`      | Yes                    | Versioned public/CMS API and media delivery |
-| `postgres` | No                     | Structured source of truth                  |
-| `media`    | No management endpoint | Production media objects                    |
+| `website` | Yes | Public Next.js website |
+| `admin` | Yes | Authenticated CMS |
+| `api` | Yes | Versioned public/CMS API and media delivery |
+| `postgres` | No | Structured source of truth |
+| `media` | No management endpoint | Production media objects |
 
 Use separate staging and production databases and buckets. `compose.yaml` is for local PostgreSQL only.
 

@@ -71,6 +71,56 @@ describe('homepage content states', () => {
 });
 
 describe('editable website page states', () => {
+  it('stores the selected media identifier on a page draft', async () => {
+    const query = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          id: 'draft-id',
+          slug: 'about',
+          title: 'About the club',
+          introduction: 'Body',
+          eyebrow: 'Our story',
+          heading: 'About us',
+          body: 'Body',
+          state: 'draft',
+          version_number: 2,
+          image_url: 'https://api.example.test/api/v1/media/media-id',
+          image_alt: 'The club room ready for an event',
+          image_width: null,
+          image_height: null,
+          image_media_id: '70000000-0000-4000-8000-000000000001',
+        },
+      ],
+    });
+    await expect(
+      new ContentService({ query } as never).savePageDraft(
+        'about',
+        {
+          eyebrow: 'Our story',
+          heading: 'About us',
+          body: 'Body',
+          image: {
+            url: 'https://api.example.test/api/v1/media/media-id',
+            alt: 'The club room ready for an event',
+            width: null,
+            height: null,
+            mediaId: '70000000-0000-4000-8000-000000000001',
+          },
+        },
+        administrator,
+      ),
+    ).resolves.toMatchObject({
+      image: {
+        mediaId: '70000000-0000-4000-8000-000000000001',
+        alt: 'The club room ready for an event',
+      },
+    });
+    expect(String(query.mock.calls[0]?.[0])).toContain('image_media_id');
+    expect(query.mock.calls[0]?.[1]).toContain(
+      '70000000-0000-4000-8000-000000000001',
+    );
+  });
+
   it('publishes the selected page draft and audits the page slug', async () => {
     const query = vi.fn().mockResolvedValue({
       rows: [

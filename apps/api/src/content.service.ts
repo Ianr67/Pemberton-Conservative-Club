@@ -19,6 +19,7 @@ interface VersionRow {
   image_alt: string | null;
   image_width: number | null;
   image_height: number | null;
+  image_media_id: string | null;
 }
 
 interface PageVersionRow extends VersionRow {
@@ -56,6 +57,15 @@ export class ContentService {
       body: row.body,
       state: row.state,
       versionNumber: row.version_number,
+      image: row.image_url
+        ? {
+            url: row.image_url,
+            alt: row.image_alt!,
+            width: row.image_width,
+            height: row.image_height,
+            mediaId: row.image_media_id,
+          }
+        : null,
     };
   }
 
@@ -91,7 +101,7 @@ export class ContentService {
 
   async publishedPage(slug: string) {
     const result = await this.database.query<PageVersionRow>(
-      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height
+      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height, pv.image_media_id
        FROM pages p JOIN page_versions pv ON pv.id = p.published_version_id WHERE p.slug = $1`,
       [slug],
     );
@@ -105,7 +115,7 @@ export class ContentService {
 
   async latestPageDraft(slug: string) {
     const result = await this.database.query<PageVersionRow>(
-      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height
+      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height, pv.image_media_id
        FROM pages p JOIN page_versions pv ON pv.page_id = p.id
        WHERE p.slug = $1 AND pv.state = 'draft' ORDER BY pv.version_number DESC LIMIT 1`,
       [slug],
@@ -131,15 +141,16 @@ export class ContentService {
         alt: string;
         width: number | null;
         height: number | null;
+        mediaId: string | null;
       } | null;
     },
     administrator: AuthenticatedAdministrator,
   ) {
     const result = await this.database.query<PageVersionRow>(
-      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by, image_url, image_alt, image_width, image_height)
-       SELECT $1, p.id, COALESCE(max(pv.version_number), 0) + 1, 'draft', $4, $2, $3, $4, $5, $7, $8, $9, $10
+      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by, image_url, image_alt, image_width, image_height, image_media_id)
+       SELECT $1, p.id, COALESCE(max(pv.version_number), 0) + 1, 'draft', $4, $2, $3, $4, $5, $7, $8, $9, $10, $11
        FROM pages p LEFT JOIN page_versions pv ON pv.page_id = p.id WHERE p.slug = $6 GROUP BY p.id, p.slug, p.title
-       RETURNING id, introduction, eyebrow, heading, body, state, version_number, image_url, image_alt, image_width, image_height,
+       RETURNING id, introduction, eyebrow, heading, body, state, version_number, image_url, image_alt, image_width, image_height, image_media_id,
          (SELECT slug FROM pages WHERE id = page_id) AS slug,
          (SELECT title FROM pages WHERE id = page_id) AS title`,
       [
@@ -153,6 +164,7 @@ export class ContentService {
         input.image?.alt.trim() ?? null,
         input.image?.width ?? null,
         input.image?.height ?? null,
+        input.image?.mediaId ?? null,
       ],
     );
     if (!result.rows[0])
@@ -172,7 +184,7 @@ export class ContentService {
       `WITH selected AS (
          UPDATE page_versions pv SET state = 'published', published_at = now() FROM pages p
          WHERE pv.id = $1 AND pv.page_id = p.id AND p.slug = $2 AND pv.state = 'draft'
-         RETURNING pv.id, pv.page_id, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height
+         RETURNING pv.id, pv.page_id, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height, pv.image_media_id
        ), updated_page AS (
          UPDATE pages p SET published_version_id = selected.id, updated_at = now() FROM selected WHERE p.id = selected.page_id RETURNING p.id, p.slug, p.title
        ), audited AS (

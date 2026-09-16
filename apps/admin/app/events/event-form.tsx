@@ -25,7 +25,9 @@ export function EventForm({ event }: { event?: EventRecord }) {
     endsAt: local(event?.endsAt),
     visibility: event?.visibility ?? 'public',
     capacity: String(event?.capacity ?? 100),
-    artwork: event?.artwork ?? null,
+    artwork: event?.artwork
+      ? { ...event.artwork, mediaId: null as string | null }
+      : null,
   });
   const [message, setMessage] = useState('');
   const [slugEdited, setSlugEdited] = useState(!!event);

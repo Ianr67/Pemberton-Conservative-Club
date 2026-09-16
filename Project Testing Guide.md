@@ -74,6 +74,17 @@ With local `MEDIA_STORAGE_PATH`, test supported types and limits, safe rejection
 
 Unit tests exercise adapter selection, safe keys, filesystem operations in a temporary directory, and S3 commands through a mocked client. Before production, repeat the upload/retrieval journey against an isolated S3-compatible staging bucket. Verify private credentials, missing-object behaviour, cleanup after failed writes, and operation without `MEDIA_STORAGE_PATH`. Production media remains unverified until that provider smoke test passes.
 
+For the generic-page workflow:
+
+1. Sign in with `content.manage`, open a standard page, and confirm the library shows loading, empty, or bounded newest-first results without exposing storage keys.
+2. Upload an image and confirm it appears selected in the library without creating a second object.
+3. Confirm keyboard users can reach every image button and that selection is exposed with `aria-pressed` and a visible state.
+4. Attempt to save with blank alternative text and confirm validation prevents it.
+5. Add page-specific alternative text, save the draft, and verify the public page remains unchanged.
+6. Open the authenticated preview and confirm the saved draft image and alternative text appear. Confirm logged-out access redirects to sign-in and the response is not cached.
+7. Publish, then confirm the public page displays that image and alternative text.
+8. Confirm a logged-out request to `GET /api/v1/admin/media` is rejected and no public content endpoint exposes a draft.
+
 ### Website and accessibility
 
 Test homepage, What is on/detail, Quiz nights, Function room, Membership information, Contact, About, sports/activities, and policies. Verify CMS/API consistency, no draft leakage, Membership navigation, clear phone/email calls to action, and no operational deferred feature.

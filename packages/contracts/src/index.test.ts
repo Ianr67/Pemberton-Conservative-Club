@@ -32,6 +32,24 @@ describe('page content validation', () => {
         body: 'x'.repeat(5001),
       }),
     ).toHaveLength(3));
+
+  it('requires alternative text when a page image is selected', () => {
+    expect(
+      validatePageContentInput({
+        eyebrow: 'Our story',
+        heading: 'About us',
+        body: 'A fictional introduction.',
+        image: {
+          url: 'https://example.test/media/image.jpg',
+          alt: '',
+          width: null,
+          height: null,
+        },
+      }),
+    ).toContain(
+      'Page image alternative text is required and must be at most 300 characters.',
+    );
+  });
 });
 
 describe('club settings validation', () => {

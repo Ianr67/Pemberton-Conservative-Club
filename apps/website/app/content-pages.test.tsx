@@ -16,10 +16,16 @@ const settings = {
   ],
   socialLinks: [],
 };
-function stub(content: unknown, clubSettings: unknown, statuses = [200, 200]) {
+function stub(
+  content: unknown,
+  clubSettings: unknown,
+  statuses = [200, 200],
+  pageContent?: unknown,
+) {
   const values = [
     { data: content, status: statuses[0] },
     { data: clubSettings, status: statuses[1] },
+    { data: pageContent, status: pageContent ? 200 : 500 },
   ];
   vi.stubGlobal(
     'fetch',
@@ -66,6 +72,35 @@ describe('public content pages', () => {
     expect(html).toContain('role="status"');
     expect(html).toContain('role="alert"');
     expect(html).toContain('published here soon');
+  });
+  it('renders a published CMS image with its alternative text', async () => {
+    const pageResponse = {
+      id: 'version-id',
+      slug: 'about',
+      title: 'About',
+      eyebrow: 'Our story',
+      heading: 'About the club',
+      body: 'Published body.',
+      state: 'published',
+      versionNumber: 2,
+      image: {
+        url: 'https://api.example.test/api/v1/media/image-id',
+        alt: 'The club function room set for a community event',
+        width: null,
+        height: null,
+      },
+    };
+    stub(
+      { introduction: 'A CMS introduction.' },
+      settings,
+      [200, 200],
+      pageResponse,
+    );
+    const html = renderToStaticMarkup(await ContentPage({ path: '/about' }));
+    expect(html).toContain(
+      'alt="The club function room set for a community event"',
+    );
+    expect(html).toContain('/api/v1/media/image-id');
   });
   it('keeps responsive, touch-target and reduced-motion accessibility rules', async () => {
     const { readFileSync } = await import('node:fs');

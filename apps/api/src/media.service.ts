@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { MediaUpload } from '@pcc/contracts';
+import type { MediaLibraryPage, MediaUpload } from '@pcc/contracts';
 import type { AuthenticatedAdministrator } from './auth.service.js';
 import { DatabaseService } from './database.service.js';
 import {
@@ -35,6 +35,11 @@ interface MediaRow {
   storage_key: string;
   mime_type: string;
 }
+interface MediaLibraryRow extends MediaRow {
+  original_filename: string;
+  byte_size: number;
+  created_at: Date;
+}
 
 @Injectable()
 export class MediaService {
@@ -42,6 +47,44 @@ export class MediaService {
     private readonly database: DatabaseService,
     @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage,
   ) {}
+
+  private publicUrl(id: string): string {
+    const origin =
+      process.env.PUBLIC_API_URL ??
+      `http://localhost:${process.env.PORT ?? '3002'}/api/v1`;
+    return `${origin.replace(/\/$/, '')}/media/${id}`;
+  }
+
+  async list(page: number, pageSize: number): Promise<MediaLibraryPage> {
+    const offset = (page - 1) * pageSize;
+    const [result, count] = await Promise.all([
+      this.database.query<MediaLibraryRow>(
+        `SELECT id,storage_key,original_filename,mime_type,byte_size,created_at
+         FROM media WHERE mime_type LIKE 'image/%'
+         ORDER BY created_at DESC,id DESC LIMIT $1 OFFSET $2`,
+        [pageSize, offset],
+      ),
+      this.database.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM media WHERE mime_type LIKE 'image/%'`,
+      ),
+    ]);
+    return {
+      page,
+      pageSize,
+      total: Number(count.rows[0]?.count ?? 0),
+      media: result.rows.map((row) => ({
+        id: row.id,
+        url: this.publicUrl(row.id),
+        alt: '',
+        width: null,
+        height: null,
+        originalFilename: row.original_filename,
+        mimeType: row.mime_type,
+        byteSize: row.byte_size,
+        createdAt: row.created_at.toISOString(),
+      })),
+    };
+  }
 
   async upload(
     file: UploadedImage | undefined,
@@ -96,12 +139,9 @@ export class MediaService {
       await this.storage.delete(storageKey).catch(() => undefined);
       throw error;
     }
-    const origin =
-      process.env.PUBLIC_API_URL ??
-      `http://localhost:${process.env.PORT ?? '3002'}/api/v1`;
     return {
       id,
-      url: `${origin.replace(/\/$/, '')}/media/${id}`,
+      url: this.publicUrl(id),
       alt: '',
       width: null,
       height: null,

@@ -62,7 +62,14 @@ export class FilesystemMediaStorage implements MediaStorage {
     return path;
   }
 
-  async upload(key: string, data: Buffer): Promise<void> {
+  async upload(
+    key: string,
+    data: Buffer,
+    contentType: string,
+    metadata?: Readonly<Record<string, string>>,
+  ): Promise<void> {
+    void contentType;
+    void metadata;
     const path = this.#path(key);
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, data, { flag: 'wx' });

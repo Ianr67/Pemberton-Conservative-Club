@@ -163,6 +163,8 @@ Media storage is selected explicitly with `MEDIA_STORAGE_DRIVER`:
 
 Uploads receive generated `media/<uuid>.<extension>` object keys; original filenames are retained only as PostgreSQL metadata and are never used as paths. The API preserves the existing `/api/v1/media/:id` public URL, streams objects through the selected adapter, and stores no media bytes in PostgreSQL. S3-compatible tests use a mocked client and require no cloud credentials.
 
+Authenticated content editors can upload an image or select an existing image from the bounded, newest-first media library when editing a standard CMS page. Selection records the existing media identifier on the new page version and never copies the object. Alternative text belongs to that page version and is required before its draft can be saved or published. Draft preview is authenticated and uncached; public page APIs continue to expose only the selected published version.
+
 ## Deferred reference material
 
 Mobile guidance is retained for a possible later phase under `docs/deferred/`. It is not part of the initial release and does not authorise mobile-specific endpoints or application work.

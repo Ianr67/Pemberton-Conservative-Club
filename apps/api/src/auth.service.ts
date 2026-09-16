@@ -127,7 +127,7 @@ export class AuthService {
     if (!result.rows[0])
       throw new ForbiddenException({
         code: 'permission_denied',
-        message: 'You do not have permission to manage events.',
+        message: `You do not have the required ${permission} permission.`,
       });
     return user;
   }
