@@ -32,3 +32,43 @@ export function parseDatabaseEnvironment(environment: NodeJS.ProcessEnv) {
     })
     .parse(environment);
 }
+
+const filesystemMediaEnvironmentSchema = z.object({
+  MEDIA_STORAGE_DRIVER: z.literal('filesystem').default('filesystem'),
+  MEDIA_STORAGE_PATH: z.string().trim().min(1).default('.media'),
+});
+
+const s3MediaEnvironmentSchema = z.object({
+  MEDIA_STORAGE_DRIVER: z.literal('s3'),
+  S3_ENDPOINT: z.url().refine((value) => new URL(value).protocol === 'https:', {
+    message: 'S3_ENDPOINT must use HTTPS',
+  }),
+  S3_REGION: z.string().trim().min(1),
+  S3_BUCKET: z.string().trim().min(3),
+  S3_ACCESS_KEY_ID: z.string().trim().min(1),
+  S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_FORCE_PATH_STYLE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+});
+
+export type MediaStorageEnvironment =
+  | z.infer<typeof filesystemMediaEnvironmentSchema>
+  | z.infer<typeof s3MediaEnvironmentSchema>;
+
+export function parseMediaStorageEnvironment(
+  environment: NodeJS.ProcessEnv,
+): MediaStorageEnvironment {
+  if (
+    environment.NODE_ENV === 'production' &&
+    environment.MEDIA_STORAGE_DRIVER !== 's3'
+  ) {
+    throw new Error(
+      'Production requires MEDIA_STORAGE_DRIVER=s3 with complete S3 configuration',
+    );
+  }
+  return environment.MEDIA_STORAGE_DRIVER === 's3'
+    ? s3MediaEnvironmentSchema.parse(environment)
+    : filesystemMediaEnvironmentSchema.parse(environment);
+}

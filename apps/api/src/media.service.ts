@@ -1,14 +1,18 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type { MediaUpload } from '@pcc/contracts';
 import type { AuthenticatedAdministrator } from './auth.service.js';
 import { DatabaseService } from './database.service.js';
+import {
+  createMediaObjectKey,
+  MEDIA_STORAGE,
+  type MediaStorage,
+} from './media-storage.js';
 
 const supported = {
   'image/jpeg': { extension: 'jpg', signatures: [[0xff, 0xd8, 0xff]] },
@@ -34,7 +38,10 @@ interface MediaRow {
 
 @Injectable()
 export class MediaService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage,
+  ) {}
 
   async upload(
     file: UploadedImage | undefined,
@@ -69,22 +76,26 @@ export class MediaService {
       });
     }
     const id = randomUUID();
-    const storageKey = `${id}.${definition.extension}`;
-    const directory =
-      process.env.MEDIA_STORAGE_PATH ?? join(process.cwd(), '.media');
-    await mkdir(directory, { recursive: true });
-    await writeFile(join(directory, storageKey), file.buffer, { flag: 'wx' });
-    await this.database.query(
-      `INSERT INTO media(id,storage_key,original_filename,mime_type,byte_size,created_by) VALUES($1,$2,$3,$4,$5,$6)`,
-      [
-        id,
-        storageKey,
-        file.originalname.slice(0, 255),
-        file.mimetype,
-        file.size,
-        actor.id,
-      ],
-    );
+    const storageKey = createMediaObjectKey(definition.extension);
+    await this.storage.upload(storageKey, file.buffer, file.mimetype, {
+      'media-id': id,
+    });
+    try {
+      await this.database.query(
+        `INSERT INTO media(id,storage_key,original_filename,mime_type,byte_size,created_by) VALUES($1,$2,$3,$4,$5,$6)`,
+        [
+          id,
+          storageKey,
+          file.originalname.slice(0, 255),
+          file.mimetype,
+          file.size,
+          actor.id,
+        ],
+      );
+    } catch (error) {
+      await this.storage.delete(storageKey).catch(() => undefined);
+      throw error;
+    }
     const origin =
       process.env.PUBLIC_API_URL ??
       `http://localhost:${process.env.PORT ?? '3002'}/api/v1`;
@@ -109,11 +120,10 @@ export class MediaService {
         code: 'media_not_found',
         message: 'Image was not found.',
       });
-    const directory =
-      process.env.MEDIA_STORAGE_PATH ?? join(process.cwd(), '.media');
     try {
+      const stored = await this.storage.read(row.storage_key);
       return {
-        data: await readFile(join(directory, row.storage_key)),
+        data: stored.data,
         mimeType: row.mime_type,
       };
     } catch {

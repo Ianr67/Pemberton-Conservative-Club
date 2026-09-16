@@ -156,7 +156,12 @@ The administration dashboard links to event list, create, edit and authenticated
 
 The development seed provides one fictional venue, six published future events (including two quiz nights), and one draft event. Event and page editors accept JPEG, PNG, WebP and GIF uploads up to 5 MB and require alternative text before saving. Uploaded files are served through the public API; existing external image URLs remain supported by the contract.
 
-Local development uploads default to the API working directory's `.media` folder. The database stores media metadata only, never image bytes. Local filesystem storage is not the production deployment design: production must use the S3-compatible adapter and credentials documented in the Railway guide once that adapter is implemented. Do not deploy uploads to an ephemeral application filesystem.
+Media storage is selected explicitly with `MEDIA_STORAGE_DRIVER`:
+
+- `filesystem` is the local-development default and stores objects below `MEDIA_STORAGE_PATH` (default `.media`).
+- `s3` is the production adapter and requires the HTTPS endpoint, region, private bucket, access key, and secret key documented in `apps/api/.env.example` and the Railway guide.
+
+Uploads receive generated `media/<uuid>.<extension>` object keys; original filenames are retained only as PostgreSQL metadata and are never used as paths. The API preserves the existing `/api/v1/media/:id` public URL, streams objects through the selected adapter, and stores no media bytes in PostgreSQL. S3-compatible tests use a mocked client and require no cloud credentials.
 
 ## Deferred reference material
 

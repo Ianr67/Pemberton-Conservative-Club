@@ -23,7 +23,7 @@ Use separate staging and production databases and buckets. `compose.yaml` is for
 Before deployment:
 
 1. Add and test production `start` scripts for both Next.js applications.
-2. Implement and test the S3-compatible adapter; the current filesystem adapter is local-development only.
+2. Configure and smoke-test the S3-compatible adapter; the filesystem adapter is local-development only.
 3. Test service-specific Railway configuration and API binding to Railway's `PORT`.
 4. Complete authentication, cookie, proxy, CORS, security-header, backup, restore, monitoring, and secret-rotation reviews.
 5. Replace development administrator fixtures with an approved provisioning process.
@@ -65,7 +65,7 @@ S3_SECRET_ACCESS_KEY=<secret>
 S3_FORCE_PATH_STYLE=<true only when required>
 ```
 
-These S3 names are the intended upcoming adapter contract and must be confirmed by implementation and tests. Do not configure `MEDIA_STORAGE_PATH` in production. Keep the bucket private, block anonymous writes/listing, use least-privilege credentials, and configure encryption, lifecycle, versioning, and recovery deliberately.
+`MEDIA_STORAGE_DRIVER=s3` is mandatory for production and startup fails when required S3 values are missing or the endpoint is not HTTPS. Do not configure `MEDIA_STORAGE_PATH` in production. Keep the bucket private, block anonymous writes/listing, use least-privilege credentials, and configure encryption, lifecycle, versioning, and recovery deliberately.
 
 Website:
 

@@ -12,6 +12,7 @@ import { EventsController } from './events.controller.js';
 import { EventsService } from './events.service.js';
 import { MediaController } from './media.controller.js';
 import { MediaService } from './media.service.js';
+import { createMediaStorage, MEDIA_STORAGE } from './media-storage.js';
 
 @Module({
   controllers: [
@@ -29,6 +30,10 @@ import { MediaService } from './media.service.js';
     ClubSettingsService,
     EventsService,
     MediaService,
+    {
+      provide: MEDIA_STORAGE,
+      useFactory: () => createMediaStorage(),
+    },
   ],
 })
 export class AppModule {}

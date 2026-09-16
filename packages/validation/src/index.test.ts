@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseDatabaseEnvironment, parseServiceEnvironment } from './index.js';
+import {
+  parseDatabaseEnvironment,
+  parseMediaStorageEnvironment,
+  parseServiceEnvironment,
+} from './index.js';
 
 describe('parseServiceEnvironment', () => {
   it('uses the supplied default port', () => {
@@ -43,5 +47,49 @@ describe('parseServiceEnvironment', () => {
     ).toEqual({
       DATABASE_URL: 'postgresql://example.test/pcc_development',
     });
+  });
+});
+
+describe('parseMediaStorageEnvironment', () => {
+  it('defaults to local filesystem storage', () => {
+    expect(parseMediaStorageEnvironment({})).toEqual({
+      MEDIA_STORAGE_DRIVER: 'filesystem',
+      MEDIA_STORAGE_PATH: '.media',
+    });
+  });
+
+  it('parses complete S3-compatible configuration', () => {
+    expect(
+      parseMediaStorageEnvironment({
+        MEDIA_STORAGE_DRIVER: 's3',
+        S3_ENDPOINT: 'https://objects.example.test',
+        S3_REGION: 'auto',
+        S3_BUCKET: 'pcc-media',
+        S3_ACCESS_KEY_ID: 'test-access-key',
+        S3_SECRET_ACCESS_KEY: 'test-secret-key',
+        S3_FORCE_PATH_STYLE: 'true',
+      }),
+    ).toMatchObject({
+      MEDIA_STORAGE_DRIVER: 's3',
+      S3_FORCE_PATH_STYLE: true,
+    });
+  });
+
+  it('rejects incomplete or insecure S3 configuration', () => {
+    expect(() =>
+      parseMediaStorageEnvironment({
+        MEDIA_STORAGE_DRIVER: 's3',
+        S3_ENDPOINT: 'http://objects.example.test',
+      }),
+    ).toThrow();
+  });
+
+  it('refuses filesystem storage in production', () => {
+    expect(() =>
+      parseMediaStorageEnvironment({
+        NODE_ENV: 'production',
+        MEDIA_STORAGE_DRIVER: 'filesystem',
+      }),
+    ).toThrow('Production requires MEDIA_STORAGE_DRIVER=s3');
   });
 });

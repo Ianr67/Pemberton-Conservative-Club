@@ -72,7 +72,7 @@ Create fictional event and quiz-night drafts; preview, publish, verify list/deta
 
 With local `MEDIA_STORAGE_PATH`, test supported types and limits, safe rejection, required alternative text when published, page/event use, and retrieval. Confirm PostgreSQL contains metadata/references, not bytes.
 
-After the S3 adapter is implemented, repeat against an isolated test bucket. Verify private credentials, safe keys, cleanup after failed writes, missing-object behaviour, and operation without `MEDIA_STORAGE_PATH`. Production media remains unverified until these pass.
+Unit tests exercise adapter selection, safe keys, filesystem operations in a temporary directory, and S3 commands through a mocked client. Before production, repeat the upload/retrieval journey against an isolated S3-compatible staging bucket. Verify private credentials, missing-object behaviour, cleanup after failed writes, and operation without `MEDIA_STORAGE_PATH`. Production media remains unverified until that provider smoke test passes.
 
 ### Website and accessibility
 
