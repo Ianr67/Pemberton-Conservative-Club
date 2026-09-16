@@ -1,4 +1,5 @@
 import type { EventRecord } from '@pcc/contracts';
+import { browserImageUrl } from './media-url';
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/London',
@@ -46,7 +47,7 @@ export function EventArtwork({ event }: { event: EventRecord }) {
     // The artwork URL and alternative text are managed and validated by the shared API.
     <img
       className="event-artwork"
-      src={event.artwork.url}
+      src={browserImageUrl(event.artwork.url)}
       alt={event.artwork.alt}
       width={event.artwork.width ?? 800}
       height={event.artwork.height ?? 500}

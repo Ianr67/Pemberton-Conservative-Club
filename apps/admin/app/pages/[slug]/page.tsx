@@ -4,6 +4,8 @@ import type { PageContent } from '@pcc/contracts';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import type { EventArtwork } from '@pcc/contracts';
+import { ImageUpload } from '../../image-upload';
 
 export default function PageEditor() {
   const { slug } = useParams<{ slug: string }>();
@@ -12,6 +14,7 @@ export default function PageEditor() {
   const [eyebrow, setEyebrow] = useState('');
   const [heading, setHeading] = useState('');
   const [body, setBody] = useState('');
+  const [image, setImage] = useState<EventArtwork | null>(null);
   const [message, setMessage] = useState('Loading…');
   const [pending, setPending] = useState(false);
 
@@ -36,6 +39,7 @@ export default function PageEditor() {
       setEyebrow(current.eyebrow);
       setHeading(current.heading);
       setBody(current.body);
+      setImage(current.image);
       setMessage('');
     })();
   }, [slug]);
@@ -46,7 +50,7 @@ export default function PageEditor() {
     const response = await fetch(`/api/pages/${encodeURIComponent(slug)}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ eyebrow, heading, body }),
+      body: JSON.stringify({ eyebrow, heading, body, image }),
     });
     const result = (await response.json()) as {
       draft?: PageContent;
@@ -132,6 +136,11 @@ export default function PageEditor() {
             onChange={(event) => setBody(event.target.value)}
           />
         </label>
+        <ImageUpload
+          label="Page image (optional)"
+          image={image}
+          onChange={setImage}
+        />
         <div className="actions">
           <button disabled={pending} type="submit">
             Save draft

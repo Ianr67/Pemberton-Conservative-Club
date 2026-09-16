@@ -153,6 +153,14 @@ export class EventsService {
     if (!result.rows[0]) this.notFound();
     return this.adminDetail(id);
   }
+  async delete(id: string, actor: AuthenticatedAdministrator) {
+    const result = await this.database.query<{ id: string }>(
+      `WITH removed AS (DELETE FROM events WHERE id=$1 RETURNING id,slug,title), audited AS (INSERT INTO audit_events(id,actor_user_id,action,entity_type,entity_id,metadata) SELECT $2,$3,'event.deleted','event',id,jsonb_build_object('slug',slug,'title',title) FROM removed) SELECT id FROM removed`,
+      [id, randomUUID(), actor.id],
+    );
+    if (!result.rows[0]) this.notFound();
+    return { deleted: true, id };
+  }
   private notFound(): never {
     throw new NotFoundException({
       code: 'event_not_found',

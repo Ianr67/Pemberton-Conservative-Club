@@ -3,6 +3,8 @@ import type { EventInput, EventRecord } from '@pcc/contracts';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ImageUpload } from '../image-upload';
+import { eventSlug } from './slug';
 const venueId = '80000000-0000-4000-8000-000000000001';
 function local(iso?: string) {
   if (!iso) return '';
@@ -23,10 +25,10 @@ export function EventForm({ event }: { event?: EventRecord }) {
     endsAt: local(event?.endsAt),
     visibility: event?.visibility ?? 'public',
     capacity: String(event?.capacity ?? 100),
-    artworkUrl: event?.artwork?.url ?? '',
-    artworkAlt: event?.artwork?.alt ?? '',
+    artwork: event?.artwork ?? null,
   });
   const [message, setMessage] = useState('');
+  const [slugEdited, setSlugEdited] = useState(!!event);
   const set = (key: string, value: string) =>
     setForm((old) => ({ ...old, [key]: value }));
   async function save() {
@@ -41,14 +43,7 @@ export function EventForm({ event }: { event?: EventRecord }) {
       endsAt: new Date(form.endsAt).toISOString(),
       visibility: form.visibility as 'public' | 'unlisted',
       capacity: Number(form.capacity),
-      artwork: form.artworkUrl
-        ? {
-            url: form.artworkUrl,
-            alt: form.artworkAlt,
-            width: null,
-            height: null,
-          }
-        : null,
+      artwork: form.artwork,
     };
     const response = await fetch(
       event ? `/api/events/${event.id}` : '/api/events',
@@ -105,7 +100,14 @@ export function EventForm({ event }: { event?: EventRecord }) {
             required
             maxLength={160}
             value={form.title}
-            onChange={(e) => set('title', e.target.value)}
+            onChange={(e) => {
+              const title = e.target.value;
+              setForm((old) => ({
+                ...old,
+                title,
+                slug: slugEdited ? old.slug : eventSlug(title),
+              }));
+            }}
           />
         </label>
         <label>
@@ -113,9 +115,18 @@ export function EventForm({ event }: { event?: EventRecord }) {
           <input
             required
             pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            maxLength={120}
             value={form.slug}
-            onChange={(e) => set('slug', e.target.value)}
+            onChange={(e) => {
+              setSlugEdited(true);
+              set('slug', e.target.value);
+            }}
           />
+          {!event && (
+            <small>
+              Generated automatically from the title. You can edit it if needed.
+            </small>
+          )}
         </label>
         <label>
           Description
@@ -175,26 +186,11 @@ export function EventForm({ event }: { event?: EventRecord }) {
             onChange={(e) => set('capacity', e.target.value)}
           />
         </label>
-        <fieldset>
-          <legend>Artwork metadata (optional)</legend>
-          <label>
-            HTTPS image URL
-            <input
-              type="url"
-              value={form.artworkUrl}
-              onChange={(e) => set('artworkUrl', e.target.value)}
-            />
-          </label>
-          <label>
-            Alternative text
-            <input
-              required={!!form.artworkUrl}
-              maxLength={300}
-              value={form.artworkAlt}
-              onChange={(e) => set('artworkAlt', e.target.value)}
-            />
-          </label>
-        </fieldset>
+        <ImageUpload
+          label="Event artwork (optional)"
+          image={form.artwork}
+          onChange={(artwork) => setForm((old) => ({ ...old, artwork }))}
+        />
         <div className="actions">
           <button type="submit">Save event</button>
           {event && (

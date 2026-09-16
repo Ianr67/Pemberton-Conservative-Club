@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { DeleteRecordButton } from '../delete-record-button';
 
 export default async function PageList() {
   const response = await fetch(
@@ -33,6 +34,15 @@ export default async function PageList() {
             </Link>
             {' — '}
             published version {page.publishedVersion ?? 'none'}
+            {page.slug !== 'homepage' && (
+              <>
+                {' · '}
+                <DeleteRecordButton
+                  endpoint={`/api/pages/${encodeURIComponent(page.slug)}`}
+                  name={page.title}
+                />
+              </>
+            )}
           </li>
         ))}
       </ul>

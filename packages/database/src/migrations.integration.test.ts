@@ -37,6 +37,7 @@ describeWithDatabase('database migrations', () => {
         '000004_club_settings.sql',
         '000005_events.sql',
         '000006_editable_content_pages.sql',
+        '000007_media_uploads.sql',
       ]);
       expect(await migrate(client)).toEqual([]);
       expect(await getMigrationStatus(client)).toEqual([
@@ -46,6 +47,7 @@ describeWithDatabase('database migrations', () => {
         { name: '000004_club_settings.sql', state: 'applied' },
         { name: '000005_events.sql', state: 'applied' },
         { name: '000006_editable_content_pages.sql', state: 'applied' },
+        { name: '000007_media_uploads.sql', state: 'applied' },
       ]);
       const tables = await client.query<{ table_name: string }>(
         `SELECT table_name
@@ -62,6 +64,7 @@ describeWithDatabase('database migrations', () => {
         'club_settings',
         'club_social_links',
         'events',
+        'media',
         'page_versions',
         'pages',
         'permissions',

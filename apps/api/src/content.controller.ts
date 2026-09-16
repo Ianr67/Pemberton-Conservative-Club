@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   Param,
@@ -82,6 +83,13 @@ export class ContentController {
     return {
       published: await this.content.publishPage(slug, versionId, administrator),
     };
+  }
+  @Delete('admin/pages/:slug') async deletePage(
+    @Headers('cookie') cookie: string | undefined,
+    @Param('slug') slug: string,
+  ) {
+    const administrator = await this.auth.authenticate(readSession(cookie));
+    return this.content.deletePage(slug, administrator);
   }
   @Get('admin/pages/homepage-introduction/preview') async preview(
     @Headers('cookie') cookie?: string,

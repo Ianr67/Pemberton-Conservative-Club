@@ -42,3 +42,22 @@ export async function POST(
     headers: { 'content-type': 'application/json' },
   });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await context.params;
+  const response = await fetch(
+    `${base()}/admin/pages/${encodeURIComponent(slug)}`,
+    {
+      method: 'DELETE',
+      headers: { cookie: request.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    },
+  );
+  return new NextResponse(await response.text(), {
+    status: response.status,
+    headers: { 'content-type': 'application/json' },
+  });
+}

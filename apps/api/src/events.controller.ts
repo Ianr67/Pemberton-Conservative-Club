@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   Param,
@@ -75,6 +76,13 @@ export class EventsController {
   ) {
     const actor = await this.authorize(cookie);
     return this.events.setPublished(id, false, actor);
+  }
+  @Delete('admin/events/:id') async delete(
+    @Headers('cookie') cookie: string | undefined,
+    @Param('id') id: string,
+  ) {
+    const actor = await this.authorize(cookie);
+    return this.events.delete(id, actor);
   }
   private authorize(cookie?: string) {
     return this.auth.requirePermission(readSession(cookie), 'events.manage');

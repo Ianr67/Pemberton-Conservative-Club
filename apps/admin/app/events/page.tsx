@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { EventRecord } from '@pcc/contracts';
+import { DeleteRecordButton } from '../delete-record-button';
 export default async function Events() {
   const response = await fetch(
     `${process.env.API_BASE_URL ?? 'http://localhost:3002/api/v1'}/admin/events`,
@@ -31,6 +32,11 @@ export default async function Events() {
               <br />
               <Link href={`/events/${event.id}`}>Edit</Link> ·{' '}
               <Link href={`/events/${event.id}/preview`}>Preview</Link>
+              {' · '}
+              <DeleteRecordButton
+                endpoint={`/api/events/${event.id}`}
+                name={event.title}
+              />
             </li>
           ))}
         </ul>

@@ -12,6 +12,25 @@ export async function PATCH(
 ) {
   return proxy(request, (await params).id, 'PATCH');
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
+  const response = await fetch(
+    `${base()}/admin/events/${encodeURIComponent(id)}`,
+    {
+      method: 'DELETE',
+      headers: { cookie: request.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    },
+  );
+  return new NextResponse(await response.text(), {
+    status: response.status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
 async function proxy(request: NextRequest, id: string, method: string) {
   const response = await fetch(
     `${base()}/admin/events/${encodeURIComponent(id)}`,

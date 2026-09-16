@@ -10,6 +10,8 @@ import { ClubSettingsController } from './club-settings.controller.js';
 import { ClubSettingsService } from './club-settings.service.js';
 import { EventsController } from './events.controller.js';
 import { EventsService } from './events.service.js';
+import { MediaController } from './media.controller.js';
+import { MediaService } from './media.service.js';
 
 @Module({
   controllers: [
@@ -18,6 +20,7 @@ import { EventsService } from './events.service.js';
     ContentController,
     ClubSettingsController,
     EventsController,
+    MediaController,
   ],
   providers: [
     DatabaseService,
@@ -25,6 +28,7 @@ import { EventsService } from './events.service.js';
     ContentService,
     ClubSettingsService,
     EventsService,
+    MediaService,
   ],
 })
 export class AppModule {}

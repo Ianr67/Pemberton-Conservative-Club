@@ -104,4 +104,22 @@ describe('editable website page states', () => {
       expect.arrayContaining(['draft-id', 'about']),
     );
   });
+  it('deletes a page and records its former identity', async () => {
+    const query = vi.fn().mockResolvedValue({ rows: [{ id: 'page-id' }] });
+    await expect(
+      new ContentService({ query } as never).deletePage('about', administrator),
+    ).resolves.toEqual({ deleted: true, slug: 'about' });
+    const sql = String(query.mock.calls[0]?.[0]);
+    expect(sql).toContain('DELETE FROM pages');
+    expect(sql).toContain('content.page_deleted');
+  });
+
+  it('protects the structural homepage from deletion', async () => {
+    await expect(
+      new ContentService({ query: vi.fn() } as never).deletePage(
+        'homepage',
+        administrator,
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
 });

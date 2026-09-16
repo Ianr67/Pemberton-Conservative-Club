@@ -153,4 +153,6 @@ The administration dashboard links to event list, create, edit and authenticated
 - `GET /api/v1/events/:slug` returns a published public or unlisted event by slug.
 - Draft events return `404` from both public endpoints and remain available through authenticated admin preview only.
 
-The development seed provides one fictional venue, six published future events (including two quiz nights), and one draft event. Artwork consists only of external HTTPS metadata and alternative text; this slice has no uploads, tickets, inventory, orders, payments, bookings, memberships, or mobile changes.
+The development seed provides one fictional venue, six published future events (including two quiz nights), and one draft event. Event and page editors accept JPEG, PNG, WebP and GIF uploads up to 5 MB and require alternative text before saving. Uploaded files are served through the public API; existing external image URLs remain supported by the contract.
+
+Local uploads default to the API working directory's `.media` folder. Set `MEDIA_STORAGE_PATH` to a persistent mounted directory and `PUBLIC_API_URL` to the externally reachable API `/api/v1` URL when deploying (for example, on a Railway volume). The database stores media metadata only, never image bytes. An S3-compatible storage adapter remains a production follow-up.

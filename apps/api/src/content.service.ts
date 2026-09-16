@@ -1,5 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { AuthenticatedAdministrator } from './auth.service.js';
 import { DatabaseService } from './database.service.js';
 
@@ -11,6 +15,10 @@ interface VersionRow {
   body: string;
   state: 'draft' | 'published';
   version_number: number;
+  image_url: string | null;
+  image_alt: string | null;
+  image_width: number | null;
+  image_height: number | null;
 }
 
 interface PageVersionRow extends VersionRow {
@@ -27,6 +35,14 @@ export class ContentService {
       introduction: row.introduction,
       state: row.state,
       versionNumber: row.version_number,
+      image: row.image_url
+        ? {
+            url: row.image_url,
+            alt: row.image_alt!,
+            width: row.image_width,
+            height: row.image_height,
+          }
+        : null,
     };
   }
 
@@ -75,7 +91,7 @@ export class ContentService {
 
   async publishedPage(slug: string) {
     const result = await this.database.query<PageVersionRow>(
-      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number
+      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height
        FROM pages p JOIN page_versions pv ON pv.id = p.published_version_id WHERE p.slug = $1`,
       [slug],
     );
@@ -89,7 +105,7 @@ export class ContentService {
 
   async latestPageDraft(slug: string) {
     const result = await this.database.query<PageVersionRow>(
-      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number
+      `SELECT pv.id, p.slug, p.title, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height
        FROM pages p JOIN page_versions pv ON pv.page_id = p.id
        WHERE p.slug = $1 AND pv.state = 'draft' ORDER BY pv.version_number DESC LIMIT 1`,
       [slug],
@@ -106,14 +122,24 @@ export class ContentService {
 
   async savePageDraft(
     slug: string,
-    input: { eyebrow: string; heading: string; body: string },
+    input: {
+      eyebrow: string;
+      heading: string;
+      body: string;
+      image?: {
+        url: string;
+        alt: string;
+        width: number | null;
+        height: number | null;
+      } | null;
+    },
     administrator: AuthenticatedAdministrator,
   ) {
     const result = await this.database.query<PageVersionRow>(
-      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by)
-       SELECT $1, p.id, COALESCE(max(pv.version_number), 0) + 1, 'draft', $4, $2, $3, $4, $5
+      `INSERT INTO page_versions (id, page_id, version_number, state, introduction, eyebrow, heading, body, created_by, image_url, image_alt, image_width, image_height)
+       SELECT $1, p.id, COALESCE(max(pv.version_number), 0) + 1, 'draft', $4, $2, $3, $4, $5, $7, $8, $9, $10
        FROM pages p LEFT JOIN page_versions pv ON pv.page_id = p.id WHERE p.slug = $6 GROUP BY p.id, p.slug, p.title
-       RETURNING id, introduction, eyebrow, heading, body, state, version_number,
+       RETURNING id, introduction, eyebrow, heading, body, state, version_number, image_url, image_alt, image_width, image_height,
          (SELECT slug FROM pages WHERE id = page_id) AS slug,
          (SELECT title FROM pages WHERE id = page_id) AS title`,
       [
@@ -123,6 +149,10 @@ export class ContentService {
         input.body.trim(),
         administrator.id,
         slug,
+        input.image?.url ?? null,
+        input.image?.alt.trim() ?? null,
+        input.image?.width ?? null,
+        input.image?.height ?? null,
       ],
     );
     if (!result.rows[0])
@@ -142,7 +172,7 @@ export class ContentService {
       `WITH selected AS (
          UPDATE page_versions pv SET state = 'published', published_at = now() FROM pages p
          WHERE pv.id = $1 AND pv.page_id = p.id AND p.slug = $2 AND pv.state = 'draft'
-         RETURNING pv.id, pv.page_id, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number
+         RETURNING pv.id, pv.page_id, pv.introduction, pv.eyebrow, pv.heading, pv.body, pv.state, pv.version_number, pv.image_url, pv.image_alt, pv.image_width, pv.image_height
        ), updated_page AS (
          UPDATE pages p SET published_version_id = selected.id, updated_at = now() FROM selected WHERE p.id = selected.page_id RETURNING p.id, p.slug, p.title
        ), audited AS (
@@ -157,6 +187,24 @@ export class ContentService {
         message: 'Draft could not be published.',
       });
     return this.presentPage(result.rows[0]);
+  }
+  async deletePage(slug: string, administrator: AuthenticatedAdministrator) {
+    if (slug === 'homepage')
+      throw new BadRequestException({
+        code: 'protected_page',
+        message:
+          'The homepage is required by the website and cannot be deleted.',
+      });
+    const result = await this.database.query<{ id: string }>(
+      `WITH cleared AS (UPDATE pages SET published_version_id=NULL WHERE slug=$1 RETURNING id), removed AS (DELETE FROM pages WHERE id IN (SELECT id FROM cleared) RETURNING id,slug,title), audited AS (INSERT INTO audit_events(id,actor_user_id,action,entity_type,entity_id,metadata) SELECT $2,$3,'content.page_deleted','page',id,jsonb_build_object('slug',slug,'title',title) FROM removed) SELECT id FROM removed`,
+      [slug, randomUUID(), administrator.id],
+    );
+    if (!result.rows[0])
+      throw new NotFoundException({
+        code: 'page_not_found',
+        message: 'Page could not be found.',
+      });
+    return { deleted: true, slug };
   }
   async latestDraft() {
     const result = await this.database.query<VersionRow>(

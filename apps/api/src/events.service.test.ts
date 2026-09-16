@@ -62,4 +62,17 @@ describe('event publication boundaries', () => {
     expect(sql).toContain('event.published');
     expect(sql).toContain('audit_events');
   });
+  it('deletes and audits an event in one statement', async () => {
+    const query = vi.fn().mockResolvedValue({ rows: [{ id: 'e' }] });
+    await expect(
+      new EventsService({ query } as never).delete('e', {
+        id: 'u',
+        email: 'a@example.test',
+        displayName: 'A',
+      }),
+    ).resolves.toEqual({ deleted: true, id: 'e' });
+    const sql = String(query.mock.calls[0]?.[0]);
+    expect(sql).toContain('DELETE FROM events');
+    expect(sql).toContain('event.deleted');
+  });
 });

@@ -7,6 +7,7 @@ export interface PageContent {
   eyebrow: string;
   heading: string;
   body: string;
+  image: EventArtwork | null;
   state: 'draft' | 'published';
   versionNumber: number;
 }
@@ -15,6 +16,7 @@ export interface PageContentInput {
   eyebrow: string;
   heading: string;
   body: string;
+  image?: EventArtwork | null;
 }
 
 export function validatePageContentInput(value: unknown): string[] {
@@ -39,6 +41,7 @@ export function validatePageContentInput(value: unknown): string[] {
     page.body.length > 5000
   )
     errors.push('Body is required and must be at most 5000 characters.');
+  errors.push(...validateImage(page.image, 'Page image'));
   return errors;
 }
 
@@ -52,6 +55,48 @@ export interface EventArtwork {
   alt: string;
   width: number | null;
   height: number | null;
+}
+
+export interface MediaUpload extends EventArtwork {
+  id: string;
+}
+
+function validateImage(value: unknown, label: string): string[] {
+  if (value === null || value === undefined) return [];
+  if (!value || typeof value !== 'object')
+    return [`${label} must be an object or null.`];
+  const image = value as Record<string, unknown>;
+  const errors: string[] = [];
+  try {
+    if (typeof image.url !== 'string') throw new Error();
+    const url = new URL(image.url);
+    if (
+      url.protocol !== 'https:' &&
+      !(
+        url.protocol === 'http:' &&
+        ['localhost', '127.0.0.1', '::1'].includes(url.hostname)
+      )
+    )
+      throw new Error();
+  } catch {
+    errors.push(`${label} URL must be a valid HTTPS URL.`);
+  }
+  if (
+    typeof image.alt !== 'string' ||
+    !image.alt.trim() ||
+    image.alt.length > 300
+  )
+    errors.push(
+      `${label} alternative text is required and must be at most 300 characters.`,
+    );
+  for (const key of ['width', 'height'] as const) {
+    if (
+      image[key] !== null &&
+      (!Number.isInteger(image[key]) || (image[key] as number) < 1)
+    )
+      errors.push(`${label} ${key} must be a positive whole number or null.`);
+  }
+  return errors;
 }
 
 export interface EventInput {
@@ -122,37 +167,7 @@ export function validateEventInput(value: unknown): string[] {
   )
     errors.push('Capacity must be a whole number between 1 and 100000.');
   if (event.artwork !== null) {
-    if (!event.artwork || typeof event.artwork !== 'object')
-      errors.push('Artwork metadata must be an object or null.');
-    else {
-      const artwork = event.artwork as Record<string, unknown>;
-      try {
-        if (
-          typeof artwork.url !== 'string' ||
-          new URL(artwork.url).protocol !== 'https:'
-        )
-          throw new Error();
-      } catch {
-        errors.push('Artwork URL must be a valid HTTPS URL.');
-      }
-      if (
-        typeof artwork.alt !== 'string' ||
-        !artwork.alt.trim() ||
-        artwork.alt.length > 300
-      )
-        errors.push(
-          'Artwork alternative text is required and must be at most 300 characters.',
-        );
-      for (const key of ['width', 'height'] as const) {
-        if (
-          artwork[key] !== null &&
-          (!Number.isInteger(artwork[key]) || (artwork[key] as number) < 1)
-        )
-          errors.push(
-            `Artwork ${key} must be a positive whole number or null.`,
-          );
-      }
-    }
+    errors.push(...validateImage(event.artwork, 'Artwork'));
   }
   return [...new Set(errors)];
 }

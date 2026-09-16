@@ -456,6 +456,15 @@ footer nav a {
   object-fit: cover;
   background: #e8dfd1;
 }
+
+.content-page-image {
+  display: block;
+  width: 100%;
+  max-height: 28rem;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  margin-top: 1.5rem;
+}
 .event-artwork-fallback {
   display: grid;
   place-items: center;

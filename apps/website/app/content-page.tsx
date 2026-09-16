@@ -8,6 +8,7 @@ import {
   readApi,
 } from './site';
 import type { PageContent as PageContentRecord } from '@pcc/contracts';
+import { browserImageUrl } from './media-url';
 
 const copy = {
   '/function-room': {
@@ -68,6 +69,13 @@ export async function ContentPage({ path }: { path: keyof typeof copy }) {
             Published page content is temporarily unavailable. Showing fallback
             content.
           </p>
+        )}
+        {pageContent.status === 'ready' && pageContent.data.image && (
+          <img
+            className="content-page-image"
+            src={browserImageUrl(pageContent.data.image.url)}
+            alt={pageContent.data.image.alt}
+          />
         )}
       </PageHero>
       <section

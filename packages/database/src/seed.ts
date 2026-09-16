@@ -374,6 +374,7 @@ export async function resetDevelopmentData(
   try {
     await client.query(
       `TRUNCATE TABLE
+         media,
          events,
          venues,
          club_social_links,
